@@ -30,6 +30,8 @@ export interface SavedOutfit {
   price?: string;
   dateAdded: string;
   notes?: string;
+  syncedToCloud?: boolean; // Supabase sync status
+  userId?: string; // For cloud storage
 }
 
 export interface WishlistItem {
@@ -42,6 +44,8 @@ export interface WishlistItem {
   dateAdded: string;
   notes?: string;
   isPublic: boolean;
+  syncedToCloud?: boolean; // Supabase sync status
+  userId?: string; // For cloud storage
 }
 
 export interface SizeGuide {
@@ -63,4 +67,21 @@ export interface FitPrediction {
   tooLarge: boolean;
   perfectFit: boolean;
   recommendations: string[];
+}
+
+export interface Friend {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  createdAt: string;
+}
+
+export interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  fromUser?: Friend;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
 }

@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "Ervenista",
-    "slug": "Ervenista",
+    "name": "VirtuFit",
+    "slug": "VirtuFit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -45,5 +44,5 @@
       "router": {}
     }
   },
-  "scheme": "Ervenista"
+  "scheme": "VirtuFit"
 }
