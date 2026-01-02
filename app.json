@@ -1,7 +1,8 @@
+
 {
   "expo": {
-    "name": "VirtuFit",
-    "slug": "VirtuFit",
+    "name": "Ervenista",
+    "slug": "Ervenista",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -10,7 +11,7 @@
     "splash": {
       "image": "./assets/images/natively-dark.png",
       "resizeMode": "contain",
-      "backgroundColor": "#7226FF"
+      "backgroundColor": "#193cb8"
     },
     "ios": {
       "supportsTablet": true,
@@ -22,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#7226FF"
+        "backgroundColor": "#193cb8"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Ervenista"
@@ -44,5 +45,5 @@
       "router": {}
     }
   },
-  "scheme": "VirtuFit"
+  "scheme": "Ervenista"
 }

@@ -1,26 +1,25 @@
 
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
-// Altitude color palette - vibrant and energetic
+// Ervenista color palette - elegant blue scheme
 export const colors = {
-  // Primary colors from Altitude palette
-  blushPink: '#FFE5F1',      // Colour 1 - soft backgrounds
-  cyan: '#87F5F5',           // Colour 2 - bright accents
-  magenta: '#F042FF',        // Colour 3 - vibrant highlights
-  purple: '#7226FF',         // Colour 4 - primary actions
-  deepPurple: '#160078',     // Colour 5 - emphasis/headers
-  navy: '#010030',           // Colour 6 - dark text/backgrounds
+  // Primary colors from blue palette
+  darkNavy: '#162456',       // Deep navy blue - dark backgrounds
+  royalBlue: '#193cb8',      // Royal blue - primary actions
+  skyBlue: '#64B5F6',        // Sky blue - accents and highlights
+  lightBlue: '#E3F2FD',      // Light blue - soft backgrounds
+  white: '#FFFFFF',          // Pure white
   
   // Semantic colors
-  background: '#FFE5F1',     // Blush pink for main background
-  text: '#010030',           // Navy for primary text
-  textSecondary: '#160078',  // Deep purple for secondary text
-  primary: '#7226FF',        // Purple for primary actions
-  secondary: '#F042FF',      // Magenta for secondary actions
-  accent: '#87F5F5',         // Cyan for accents
+  background: '#FFFFFF',     // White for main background
+  text: '#162456',           // Dark navy for primary text
+  textSecondary: '#193cb8',  // Royal blue for secondary text
+  primary: '#193cb8',        // Royal blue for primary actions
+  secondary: '#64B5F6',      // Sky blue for secondary actions
+  accent: '#64B5F6',         // Sky blue for accents
   card: '#FFFFFF',           // Pure white for cards
-  highlight: '#F042FF',      // Magenta for highlights
-  border: '#87F5F5',         // Cyan for borders
+  highlight: '#193cb8',      // Royal blue for highlights
+  border: '#E3F2FD',         // Light blue for borders
   error: '#EF4444',
   milkyWay: '#FFFFFF',       // White for text on dark backgrounds
   meteor: '#E5E7EB',         // Light gray for subtle backgrounds
@@ -95,7 +94,7 @@ export const commonStyles = StyleSheet.create({
     padding: 16,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 2px 8px rgba(135, 245, 245, 0.3)',
+    boxShadow: '0px 2px 8px rgba(100, 181, 246, 0.2)',
     elevation: 2,
   },
   icon: {
