@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, View, Text } from "react-native";
@@ -23,7 +22,7 @@ export function DemoCard({ item }: DemoCardProps) {
       glassEffectStyle="regular"
     >
       <View style={[styles.demoIcon, { backgroundColor: item.color }]}>
-        <IconSymbol ios_icon_name="square.grid.3x3" android_material_icon_name="apps" color={theme.dark ? '#111111' : '#FFFFFF'} size={16} />
+        <IconSymbol ios_icon_name="square.grid.3x3" android_material_icon_name="apps" color={theme.dark ? '#111111' : '#FFFFFF'} size={24} />
       </View>
       <View style={styles.demoContent}>
         <Text style={[styles.demoTitle, { color: theme.colors.text }]}>
@@ -42,7 +41,7 @@ export function DemoCard({ item }: DemoCardProps) {
             ]}
           >
             <Text style={[styles.tryButtonText, { color: theme.colors.primary }]}>
-              Try
+              Try It
             </Text>
           </View>
         </Pressable>
@@ -53,39 +52,39 @@ export function DemoCard({ item }: DemoCardProps) {
 
 const styles = StyleSheet.create({
   demoCard: {
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 8,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
   demoIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 16,
   },
   demoContent: {
     flex: 1,
   },
   demoTitle: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   demoDescription: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 18,
   },
   tryButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
   tryButtonText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

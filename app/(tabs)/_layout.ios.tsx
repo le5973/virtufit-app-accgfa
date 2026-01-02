@@ -19,16 +19,16 @@ export default function TabLayout() {
       label: 'Wardrobe',
     },
     {
-      name: 'ai-stylist',
-      route: '/(tabs)/ai-stylist',
-      icon: 'auto-awesome',
-      label: 'AI Style',
+      name: 'wishlist',
+      route: '/(tabs)/wishlist',
+      icon: 'favorite',
+      label: 'Wishlist',
     },
     {
-      name: 'social',
-      route: '/(tabs)/social',
-      icon: 'group',
-      label: 'Social',
+      name: 'size-guide',
+      route: '/(tabs)/size-guide',
+      icon: 'straighten',
+      label: 'Sizes',
     },
     {
       name: 'profile',
@@ -44,15 +44,13 @@ export default function TabLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: 'none',
+          animation: 'none', // Remove fade animation to prevent black screen flash
         }}
       >
         <Stack.Screen key="home" name="(home)" />
         <Stack.Screen key="wardrobe" name="wardrobe" />
         <Stack.Screen key="wishlist" name="wishlist" />
         <Stack.Screen key="size-guide" name="size-guide" />
-        <Stack.Screen key="ai-stylist" name="ai-stylist" />
-        <Stack.Screen key="social" name="social" />
         <Stack.Screen key="profile" name="profile" />
       </Stack>
       <FloatingTabBar tabs={tabs} containerWidth={380} />
