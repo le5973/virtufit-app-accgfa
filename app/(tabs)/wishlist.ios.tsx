@@ -390,78 +390,162 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-    borderWidth: Perfect! Now I have a good understanding of the app structure. Let me implement the requested features:
-
-1. **Video upload for body scan** - Extend the image picker to support video
-2. **Saved Outfits section** - Virtual try-on wardrobe from multiple websites
-3. **Public Wishlist** - Shareable wishlist with app friends
-4. **Size Guide Integration** - Link external size guides for fit accuracy
-
-I'll keep it simple and focused, adding just 2 new tabs (Wardrobe and Wishlist) to the existing 2 tabs. Let me start implementing:
-
-<write file="types/bodyMeasurements.ts">
-export interface BodyMeasurements {
-  bust: number;        // in cm
-  waist: number;       // in cm
-  hip: number;         // in cm
-  shoulders: number;   // in cm
-  armLength: number;   // in cm
-  legsLength: number;  // in cm
-  feetSize: number;    // in cm or shoe size
-}
-
-export interface BodyScan {
-  height: number;      // in cm
-  weight: number;      // in kg
-  image: string | null;
-  video: string | null; // Added video support
-}
-
-export interface BodyAnalysisResult {
-  measurements: BodyMeasurements;
-  confidence: number;
-}
-
-export interface SavedOutfit {
-  id: string;
-  name: string;
-  imageUrl: string;
-  websiteUrl: string;
-  websiteName: string;
-  price?: string;
-  dateAdded: string;
-  notes?: string;
-}
-
-export interface WishlistItem {
-  id: string;
-  name: string;
-  imageUrl: string;
-  websiteUrl: string;
-  websiteName: string;
-  price?: string;
-  dateAdded: string;
-  notes?: string;
-  isPublic: boolean;
-}
-
-export interface SizeGuide {
-  brand: string;
-  category: string; // 'tops', 'bottoms', 'shoes', etc.
-  measurements: {
-    size: string;
-    bust?: number;
-    waist?: number;
-    hip?: number;
-    length?: number;
-  }[];
-}
-
-export interface FitPrediction {
-  size: string;
-  fitScore: number; // 0-100
-  tooSmall: boolean;
-  tooLarge: boolean;
-  perfectFit: boolean;
-  recommendations: string[];
-}
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
+    color: colors.text,
+    marginBottom: 12,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  publicToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  publicLabel: {
+    fontSize: 15,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  formButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  formButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  saveButton: {
+    backgroundColor: colors.primary,
+  },
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.milkyWay,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  itemsGrid: {
+    gap: 16,
+  },
+  itemCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  itemImage: {
+    width: '100%',
+    height: 200,
+    backgroundColor: colors.border,
+  },
+  itemInfo: {
+    padding: 16,
+  },
+  itemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  itemName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    flex: 1,
+  },
+  publicBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  publicBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.milkyWay,
+  },
+  itemWebsite: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  itemPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  itemNotes: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: 12,
+  },
+  itemActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: colors.background,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  actionButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text,
+  },
+});
