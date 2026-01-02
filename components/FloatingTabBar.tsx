@@ -1,5 +1,4 @@
 
-import React from 'react';
 import {
   View,
   Text,
@@ -8,27 +7,26 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { useRouter, usePathname } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { IconSymbol } from '@/components/IconSymbol';
-import { BlurView } from 'expo-blur';
-import { useTheme } from '@react-navigation/native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   interpolate,
 } from 'react-native-reanimated';
+import React from 'react';
+import { colors } from '@/styles/commonStyles';
+import { useTheme } from '@react-navigation/native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Href } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { BlurView } from 'expo-blur';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { IconSymbol } from '@/components/IconSymbol';
+import { useRouter, usePathname } from 'expo-router';
 
 export interface TabBarItem {
   name: string;
   route: Href;
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: string;
   label: string;
 }
 
@@ -39,225 +37,135 @@ interface FloatingTabBarProps {
   bottomMargin?: number;
 }
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 export default function FloatingTabBar({
   tabs,
-  containerWidth = screenWidth / 2.5,
-  borderRadius = 35,
-  bottomMargin
+  containerWidth = SCREEN_WIDTH * 0.75, // Reduced from 0.9 to 0.75
+  borderRadius = 25,
+  bottomMargin = 20,
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const theme = useTheme();
-  const animatedValue = useSharedValue(0);
 
-  // Improved active tab detection with better path matching
-  const activeTabIndex = React.useMemo(() => {
-    // Find the best matching tab based on the current pathname
-    let bestMatch = -1;
-    let bestMatchScore = 0;
+  const activeIndex = tabs.findIndex((tab) => pathname.includes(tab.name));
+  const indicatorPosition = useSharedValue(activeIndex >= 0 ? activeIndex : 0);
 
-    tabs.forEach((tab, index) => {
-      let score = 0;
-
-      // Exact route match gets highest score
-      if (pathname === tab.route) {
-        score = 100;
-      }
-      // Check if pathname starts with tab route (for nested routes)
-      else if (pathname.startsWith(tab.route as string)) {
-        score = 80;
-      }
-      // Check if pathname contains the tab name
-      else if (pathname.includes(tab.name)) {
-        score = 60;
-      }
-      // Check for partial matches in the route
-      else if (tab.route.includes('/(tabs)/') && pathname.includes(tab.route.split('/(tabs)/')[1])) {
-        score = 40;
-      }
-
-      if (score > bestMatchScore) {
-        bestMatchScore = score;
-        bestMatch = index;
-      }
+  const handleTabPress = (route: Href, index: number) => {
+    indicatorPosition.value = withSpring(index, {
+      damping: 15,
+      stiffness: 150,
     });
-
-    // Default to first tab if no match found
-    return bestMatch >= 0 ? bestMatch : 0;
-  }, [pathname, tabs]);
-
-  React.useEffect(() => {
-    if (activeTabIndex >= 0) {
-      animatedValue.value = withSpring(activeTabIndex, {
-        damping: 20,
-        stiffness: 120,
-        mass: 1,
-      });
-    }
-  }, [activeTabIndex, animatedValue]);
-
-  const handleTabPress = (route: Href) => {
     router.push(route);
   };
 
-  const tabWidthPercent = ((100 / tabs.length) - 1).toFixed(2);
+  const tabWidth = containerWidth / tabs.length;
 
   const indicatorStyle = useAnimatedStyle(() => {
-    const tabWidth = (containerWidth - 8) / tabs.length; // Account for container padding (4px on each side)
     return {
       transform: [
         {
           translateX: interpolate(
-            animatedValue.value,
+            indicatorPosition.value,
             [0, tabs.length - 1],
-            [0, tabWidth * (tabs.length - 1)]
+            [0, containerWidth - tabWidth]
           ),
         },
       ],
     };
   });
 
-  // Dynamic styles based on theme
-  const dynamicStyles = {
-    blurContainer: {
-      ...styles.blurContainer,
-      borderWidth: 1.2,
-      borderColor: colors.border,
-      ...Platform.select({
-        ios: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.8)'
-            : 'rgba(255, 255, 255, 0.9)',
-        },
-        android: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.95)'
-            : 'rgba(255, 255, 255, 0.95)',
-        },
-        web: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.95)'
-            : 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-        },
-      }),
-    },
-    background: {
-      ...styles.background,
-    },
-    indicator: {
-      ...styles.indicator,
-      backgroundColor: colors.highlight,
-      width: `${tabWidthPercent}%` as `${number}%`, // Dynamic width based on number of tabs
-    },
-  };
-
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <View style={[
-        styles.container,
-        {
-          width: containerWidth,
-          marginBottom: bottomMargin ?? 20
-        }
-      ]}>
-        <BlurView
-          intensity={80}
-          style={[dynamicStyles.blurContainer, { borderRadius }]}
-        >
-          <View style={dynamicStyles.background} />
-          <Animated.View style={[dynamicStyles.indicator, indicatorStyle]} />
-          <View style={styles.tabsContainer}>
-            {tabs.map((tab, index) => {
-              const isActive = activeTabIndex === index;
-
-              return (
-                <React.Fragment key={index}>
-                <TouchableOpacity
-                  style={styles.tab}
-                  onPress={() => handleTabPress(tab.route)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.tabContent}>
-                    <IconSymbol
-                      android_material_icon_name={tab.icon}
-                      ios_icon_name={tab.icon}
-                      size={24}
-                      color={isActive ? colors.primary : colors.textSecondary}
-                    />
-                    <Text
-                      style={[
-                        styles.tabLabel,
-                        { color: colors.textSecondary },
-                        isActive && { color: colors.primary, fontWeight: '600' },
-                      ]}
-                    >
-                      {tab.label}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-                </React.Fragment>
-              );
-            })}
-          </View>
-        </BlurView>
-      </View>
+    <SafeAreaView
+      edges={['bottom']}
+      style={[styles.container, { marginBottom: bottomMargin }]}
+    >
+      <BlurView intensity={80} tint="dark" style={[styles.tabBar, { width: containerWidth, borderRadius }]}>
+        <Animated.View
+          style={[
+            styles.indicator,
+            indicatorStyle,
+            {
+              width: tabWidth,
+              borderRadius: borderRadius - 5,
+            },
+          ]}
+        />
+        {tabs.map((tab, index) => {
+          const isActive = pathname.includes(tab.name);
+          return (
+            <TouchableOpacity
+              key={tab.name}
+              style={[styles.tab, { width: tabWidth }]}
+              onPress={() => handleTabPress(tab.route, index)}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons
+                name={tab.icon as any}
+                size={24}
+                color={isActive ? colors.primary : colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.label,
+                  { color: isActive ? colors.primary : colors.textSecondary },
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </BlurView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 1000,
-    alignItems: 'center', // Center the content
-  },
-  container: {
-    marginHorizontal: 20,
-    alignSelf: 'center',
-    // width and marginBottom handled dynamically via props
-  },
-  blurContainer: {
-    overflow: 'hidden',
-    // borderRadius and other styling applied dynamically
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    // Dynamic styling applied in component
-  },
-  indicator: {
-    position: 'absolute',
-    top: 4,
-    left: 2,
-    bottom: 4,
-    borderRadius: 27,
-    width: `${(100 / 2) - 1}%`, // Default for 2 tabs, will be overridden by dynamic styles
-    // Dynamic styling applied in component
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    height: 60,
     alignItems: 'center',
-    paddingHorizontal: 4,
+    zIndex: 1000,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 60,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    height: '100%',
+    zIndex: 2,
   },
-  tabContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  tabLabel: {
-    fontSize: 9,
-    fontWeight: '500',
+  label: {
+    fontSize: 11,
     marginTop: 2,
-    // Dynamic styling applied in component
+    fontWeight: '600',
+  },
+  indicator: {
+    position: 'absolute',
+    height: '70%',
+    backgroundColor: colors.surface,
+    opacity: 0.3,
+    zIndex: 1,
+    top: '15%',
   },
 });
