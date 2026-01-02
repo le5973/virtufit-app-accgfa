@@ -1,8 +1,8 @@
 
-import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
-import { colors } from "@/styles/commonStyles";
-import { BodyMeasurements } from "@/types/bodyMeasurements";
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { colors } from '@/styles/commonStyles';
+import { BodyMeasurements } from '@/types/bodyMeasurements';
 
 interface AvatarPreviewProps {
   imageUri?: string;
@@ -10,18 +10,20 @@ interface AvatarPreviewProps {
   confidence?: number;
 }
 
-export function AvatarPreview({ imageUri, measurements, confidence }: AvatarPreviewProps) {
+export const AvatarPreview: React.FC<AvatarPreviewProps> = ({
+  imageUri,
+  measurements,
+  confidence,
+}) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Avatar</Text>
-      
       {imageUri && (
         <View style={styles.imageContainer}>
           <Image source={{ uri: imageUri }} style={styles.image} />
-          {confidence !== undefined && (
+          {confidence && (
             <View style={styles.confidenceBadge}>
               <Text style={styles.confidenceText}>
-                {Math.round(confidence * 100)}% accurate
+                {Math.round(confidence * 100)}% confident
               </Text>
             </View>
           )}
@@ -31,123 +33,108 @@ export function AvatarPreview({ imageUri, measurements, confidence }: AvatarPrev
       {measurements && (
         <View style={styles.measurementsContainer}>
           <Text style={styles.measurementsTitle}>Body Measurements</Text>
-          
-          <View style={styles.measurementGrid}>
-            {measurements.height && (
-              <MeasurementItem label="Height" value={`${measurements.height} cm`} />
+          <View style={styles.measurementsGrid}>
+            {measurements.bust !== undefined && (
+              <MeasurementItem label="Bust" value={`${measurements.bust} cm`} />
             )}
-            {measurements.weight && (
-              <MeasurementItem label="Weight" value={`${measurements.weight} kg`} />
-            )}
-            {measurements.chest && (
-              <MeasurementItem label="Chest" value={`${measurements.chest} cm`} />
-            )}
-            {measurements.waist && (
+            {measurements.waist !== undefined && (
               <MeasurementItem label="Waist" value={`${measurements.waist} cm`} />
             )}
-            {measurements.hips && (
-              <MeasurementItem label="Hips" value={`${measurements.hips} cm`} />
+            {measurements.hip !== undefined && (
+              <MeasurementItem label="Hip" value={`${measurements.hip} cm`} />
             )}
-            {measurements.shoulders && (
+            {measurements.shoulders !== undefined && (
               <MeasurementItem label="Shoulders" value={`${measurements.shoulders} cm`} />
             )}
-            {measurements.inseam && (
-              <MeasurementItem label="Inseam" value={`${measurements.inseam} cm`} />
+            {measurements.armLength !== undefined && (
+              <MeasurementItem label="Arm Length" value={`${measurements.armLength} cm`} />
             )}
-            {measurements.neck && (
-              <MeasurementItem label="Neck" value={`${measurements.neck} cm`} />
+            {measurements.legsLength !== undefined && (
+              <MeasurementItem label="Legs Length" value={`${measurements.legsLength} cm`} />
             )}
-            {measurements.sleeve && (
-              <MeasurementItem label="Sleeve" value={`${measurements.sleeve} cm`} />
+            {measurements.feetSize !== undefined && (
+              <MeasurementItem label="Feet Size" value={`${measurements.feetSize} cm`} />
             )}
           </View>
         </View>
       )}
     </View>
   );
-}
+};
 
-function MeasurementItem({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.measurementItem}>
-      <Text style={styles.measurementLabel}>{label}</Text>
-      <Text style={styles.measurementValue}>{value}</Text>
-    </View>
-  );
-}
+const MeasurementItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <View style={styles.measurementItem}>
+    <Text style={styles.measurementLabel}>{label}</Text>
+    <Text style={styles.measurementValue}>{value}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 20,
-    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
-    elevation: 3,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: 16,
-    textAlign: "center",
+    width: '100%',
+    alignItems: 'center',
   },
   imageContainer: {
-    width: "100%",
+    width: '100%',
     aspectRatio: 3 / 4,
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: colors.background,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: colors.meteor,
     marginBottom: 20,
-    position: "relative",
+    position: 'relative',
   },
   image: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   confidenceBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: colors.accent,
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: colors.galaxy,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   confidenceText: {
-    color: colors.card,
+    color: colors.milkyWay,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   measurementsContainer: {
-    width: "100%",
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   measurementsTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  measurementGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  measurementsGrid: {
     gap: 12,
   },
   measurementItem: {
-    width: "48%",
-    backgroundColor: colors.highlight,
-    padding: 12,
-    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.highlight,
   },
   measurementLabel: {
-    fontSize: 12,
+    fontSize: 15,
+    fontWeight: '500',
     color: colors.textSecondary,
-    marginBottom: 4,
   },
   measurementValue: {
     fontSize: 16,
-    fontWeight: "600",
-    color: colors.primary,
+    fontWeight: '700',
+    color: colors.text,
   },
 });

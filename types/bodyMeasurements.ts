@@ -1,27 +1,21 @@
 
 export interface BodyMeasurements {
-  height: number; // in cm
-  weight: number; // in kg
-  chest: number; // in cm
-  waist: number; // in cm
-  hips: number; // in cm
-  shoulders: number; // in cm
-  inseam: number; // in cm
-  neck: number; // in cm
-  sleeve: number; // in cm
+  bust: number;        // in cm
+  waist: number;       // in cm
+  hip: number;         // in cm
+  shoulders: number;   // in cm
+  armLength: number;   // in cm
+  legsLength: number;  // in cm
+  feetSize: number;    // in cm or shoe size
 }
 
 export interface BodyScan {
-  id: string;
-  userId: string;
-  imageUri: string;
-  measurements: BodyMeasurements;
-  createdAt: string;
-  updatedAt: string;
+  height: number;      // in cm
+  weight: number;      // in kg
+  image: string | null;
 }
 
 export interface BodyAnalysisResult {
-  measurements: Partial<BodyMeasurements>;
+  measurements: BodyMeasurements;
   confidence: number;
-  suggestions: string[];
 }

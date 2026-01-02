@@ -1,16 +1,27 @@
 
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
+// Cosmic color palette from the design
 export const colors = {
-  background: '#F8F9FA',
-  text: '#1A1A1A',
-  textSecondary: '#6B7280',
-  primary: '#8B5CF6',
-  secondary: '#EC4899',
-  accent: '#10B981',
-  card: '#FFFFFF',
-  highlight: '#DDD6FE',
-  border: '#E5E7EB',
+  // Primary colors
+  planetary: '#334EAC',      // Deep blue - primary actions
+  venus: '#BAD6EB',          // Light blue - accents
+  universe: '#7096D1',       // Medium blue - secondary
+  meteor: '#F7F2EB',         // Light cream - backgrounds
+  galaxy: '#081F5C',         // Dark blue - headers/emphasis
+  milkyWay: '#FFF9F0',       // Cream white - cards
+  sky: '#D0E3FF',            // Sky blue - highlights
+  
+  // Semantic colors
+  background: '#FFF9F0',     // Milky Way
+  text: '#081F5C',           // Galaxy
+  textSecondary: '#7096D1',  // Universe
+  primary: '#334EAC',        // Planetary
+  secondary: '#7096D1',      // Universe
+  accent: '#BAD6EB',         // Venus
+  card: '#FFFFFF',           // Pure white for cards
+  highlight: '#D0E3FF',      // Sky
+  border: '#BAD6EB',         // Venus
   error: '#EF4444',
 };
 
@@ -83,7 +94,7 @@ export const commonStyles = StyleSheet.create({
     padding: 16,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    boxShadow: '0px 2px 8px rgba(186, 214, 235, 0.3)',
     elevation: 2,
   },
   icon: {

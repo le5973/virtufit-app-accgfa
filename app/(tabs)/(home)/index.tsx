@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -11,37 +11,47 @@ import {
   Alert,
   Image,
   Platform
-} from "react-native";
-import { colors } from "@/styles/commonStyles";
-import { IconSymbol } from "@/components/IconSymbol";
-import * as ImagePicker from "expo-image-picker";
-import { useBodyAnalysis } from "@/hooks/useBodyAnalysis";
-import { AvatarPreview } from "@/components/AvatarPreview";
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { colors } from '@/styles/commonStyles';
+import { AvatarPreview } from '@/components/AvatarPreview';
+import { useBodyAnalysis } from '@/hooks/useBodyAnalysis';
+import { IconSymbol } from '@/components/IconSymbol';
+import { BodyScan } from '@/types/bodyMeasurements';
 
 export default function HomeScreen() {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [height, setHeight] = useState("");
-  const [weight, setWeight] = useState("");
-  const { analyzeBody, loading, error, data, reset } = useBodyAnalysis();
+  const [bodyScan, setBodyScan] = useState<BodyScan>({
+    height: 0,
+    weight: 0,
+    image: null,
+  });
+  const [hasAnalyzed, setHasAnalyzed] = useState(false);
+
+  const { result, loading, error } = useBodyAnalysis(bodyScan);
 
   const pickImage = async () => {
     try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [3, 4],
         quality: 1,
       });
 
-      console.log("Image picker result:", result);
-
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
-        reset(); // Reset previous analysis
+        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri }));
+        setHasAnalyzed(false);
       }
     } catch (err) {
-      console.error("Error picking image:", err);
-      Alert.alert("Error", "Failed to pick image. Please try again.");
+      console.log('Error picking image:', err);
+      Alert.alert('Error', 'Failed to pick image');
     }
   };
 
@@ -49,11 +59,8 @@ export default function HomeScreen() {
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       
-      if (!permissionResult.granted) {
-        Alert.alert(
-          "Permission Required",
-          "Camera permission is required to take photos."
-        );
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Permission to access camera is required!');
         return;
       }
 
@@ -63,221 +70,125 @@ export default function HomeScreen() {
         quality: 1,
       });
 
-      console.log("Camera result:", result);
-
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
-        reset(); // Reset previous analysis
+        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri }));
+        setHasAnalyzed(false);
       }
     } catch (err) {
-      console.error("Error taking photo:", err);
-      Alert.alert("Error", "Failed to take photo. Please try again.");
+      console.log('Error taking photo:', err);
+      Alert.alert('Error', 'Failed to take photo');
     }
   };
 
-  const handleAnalyze = async () => {
-    if (!selectedImage) {
-      Alert.alert("No Image", "Please select or take a photo first.");
+  const handleAnalyze = () => {
+    if (!bodyScan.image) {
+      Alert.alert('Missing Image', 'Please upload or take a photo first');
       return;
     }
-
-    const heightNum = parseFloat(height);
-    const weightNum = parseFloat(weight);
-
-    if (!heightNum || heightNum < 100 || heightNum > 250) {
-      Alert.alert("Invalid Height", "Please enter a valid height between 100-250 cm.");
+    if (!bodyScan.height || bodyScan.height <= 0) {
+      Alert.alert('Missing Height', 'Please enter your height');
       return;
     }
-
-    if (!weightNum || weightNum < 30 || weightNum > 300) {
-      Alert.alert("Invalid Weight", "Please enter a valid weight between 30-300 kg.");
+    if (!bodyScan.weight || bodyScan.weight <= 0) {
+      Alert.alert('Missing Weight', 'Please enter your weight');
       return;
     }
-
-    console.log("Starting body analysis...");
-    await analyzeBody({
-      imageUri: selectedImage,
-      manualMeasurements: {
-        height: heightNum,
-        weight: weightNum,
-      },
-    });
+    setHasAnalyzed(true);
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <IconSymbol 
-            ios_icon_name="person.fill" 
-            android_material_icon_name="person" 
-            size={48} 
-            color={colors.primary} 
-          />
-          <Text style={styles.title}>AI Body Scanner</Text>
-          <Text style={styles.subtitle}>
-            Create your accurate 3D avatar for virtual try-ons
-          </Text>
-        </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Create Your Avatar</Text>
+        <Text style={styles.subtitle}>
+          Upload a photo and provide your measurements to create an accurate 3D avatar
+        </Text>
+      </View>
 
-        <View style={styles.uploadSection}>
-          <Text style={styles.sectionTitle}>Step 1: Upload Your Photo</Text>
-          <Text style={styles.sectionDescription}>
-            Take or upload a full-body photo in good lighting
-          </Text>
-
-          {selectedImage ? (
-            <View style={styles.imagePreviewContainer}>
-              <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-              <TouchableOpacity 
-                style={styles.removeImageButton}
-                onPress={() => {
-                  setSelectedImage(null);
-                  reset();
-                }}
-              >
-                <IconSymbol 
-                  ios_icon_name="xmark.circle.fill" 
-                  android_material_icon_name="cancel" 
-                  size={32} 
-                  color={colors.error} 
-                />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.uploadButtons}>
-              <TouchableOpacity style={styles.uploadButton} onPress={takePhoto}>
-                <IconSymbol 
-                  ios_icon_name="camera.fill" 
-                  android_material_icon_name="camera" 
-                  size={32} 
-                  color={colors.primary} 
-                />
-                <Text style={styles.uploadButtonText}>Take Photo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-                <IconSymbol 
-                  ios_icon_name="photo.fill" 
-                  android_material_icon_name="photo" 
-                  size={32} 
-                  color={colors.primary} 
-                />
-                <Text style={styles.uploadButtonText}>Choose from Library</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.measurementsSection}>
-          <Text style={styles.sectionTitle}>Step 2: Enter Basic Measurements</Text>
-          <Text style={styles.sectionDescription}>
-            Provide your height and weight for accurate analysis
-          </Text>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Height (cm)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., 175"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="numeric"
-              value={height}
-              onChangeText={setHeight}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Weight (kg)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., 70"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="numeric"
-              value={weight}
-              onChangeText={setWeight}
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.analyzeButton,
-            (!selectedImage || !height || !weight || loading) && styles.analyzeButtonDisabled
-          ]}
-          onPress={handleAnalyze}
-          disabled={!selectedImage || !height || !weight || loading}
-        >
-          {loading ? (
-            <React.Fragment>
-              <ActivityIndicator color={colors.card} size="small" />
-              <Text style={styles.analyzeButtonText}>Analyzing...</Text>
-            </React.Fragment>
-          ) : (
-            <React.Fragment>
-              <IconSymbol 
-                ios_icon_name="sparkles" 
-                android_material_icon_name="auto-awesome" 
-                size={24} 
-                color={colors.card} 
-              />
-              <Text style={styles.analyzeButtonText}>Generate Avatar</Text>
-            </React.Fragment>
-          )}
-        </TouchableOpacity>
-
-        {error && (
-          <View style={styles.errorContainer}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Step 1: Upload Photo</Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
             <IconSymbol 
-              ios_icon_name="exclamationmark.triangle.fill" 
-              android_material_icon_name="warning" 
-              size={20} 
-              color={colors.error} 
+              ios_icon_name="photo" 
+              android_material_icon_name="photo" 
+              size={24} 
+              color={colors.primary} 
             />
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.imageButtonText}>Choose Photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
+            <IconSymbol 
+              ios_icon_name="camera" 
+              android_material_icon_name="camera" 
+              size={24} 
+              color={colors.primary} 
+            />
+            <Text style={styles.imageButtonText}>Take Photo</Text>
+          </TouchableOpacity>
+        </View>
+
+        {bodyScan.image && (
+          <View style={styles.previewContainer}>
+            <Image source={{ uri: bodyScan.image }} style={styles.previewImage} />
           </View>
         )}
+      </View>
 
-        {data && (
-          <View style={styles.resultsSection}>
-            <AvatarPreview
-              imageUri={selectedImage || undefined}
-              measurements={data.measurements}
-              confidence={data.confidence}
-            />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Step 2: Enter Measurements</Text>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Height (cm)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="170"
+            keyboardType="numeric"
+            value={bodyScan.height > 0 ? bodyScan.height.toString() : ''}
+            onChangeText={(text) => setBodyScan(prev => ({ ...prev, height: parseFloat(text) || 0 }))}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Weight (kg)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="70"
+            keyboardType="numeric"
+            value={bodyScan.weight > 0 ? bodyScan.weight.toString() : ''}
+            onChangeText={(text) => setBodyScan(prev => ({ ...prev, weight: parseFloat(text) || 0 }))}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+      </View>
 
-            {data.suggestions && data.suggestions.length > 0 && (
-              <View style={styles.suggestionsContainer}>
-                <Text style={styles.suggestionsTitle}>Tips for Better Results</Text>
-                {data.suggestions.map((suggestion, index) => (
-                  <View key={index} style={styles.suggestionItem}>
-                    <Text style={styles.suggestionBullet}>•</Text>
-                    <Text style={styles.suggestionText}>{suggestion}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            <View style={styles.infoBox}>
-              <IconSymbol 
-                ios_icon_name="info.circle.fill" 
-                android_material_icon_name="info" 
-                size={20} 
-                color={colors.primary} 
-              />
-              <Text style={styles.infoText}>
-                To enable full AI body analysis with OpenAI Vision API, please enable Supabase 
-                by pressing the Supabase button and connecting to a project.
-              </Text>
-            </View>
-          </View>
+      <TouchableOpacity 
+        style={[styles.analyzeButton, loading && styles.analyzeButtonDisabled]} 
+        onPress={handleAnalyze}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color={colors.milkyWay} />
+        ) : (
+          <Text style={styles.analyzeButtonText}>Analyze Body</Text>
         )}
-      </ScrollView>
-    </View>
+      </TouchableOpacity>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      {hasAnalyzed && result && (
+        <View style={styles.resultsSection}>
+          <AvatarPreview
+            imageUri={bodyScan.image || undefined}
+            measurements={result.measurements}
+            confidence={result.confidence}
+          />
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
@@ -286,95 +197,74 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: Platform.OS === "android" ? 48 : 20,
-    paddingHorizontal: 20,
-    paddingBottom: 120,
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 100,
   },
   header: {
-    alignItems: "center",
     marginBottom: 32,
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
-    fontWeight: "800",
+    fontWeight: '800',
     color: colors.text,
-    marginTop: 12,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
-    textAlign: "center",
-    paddingHorizontal: 20,
+    textAlign: 'center',
+    lineHeight: 22,
   },
-  uploadSection: {
-    marginBottom: 32,
+  section: {
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 8,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: colors.textSecondary,
     marginBottom: 16,
   },
-  uploadButtons: {
-    flexDirection: "row",
+  buttonRow: {
+    flexDirection: 'row',
     gap: 12,
   },
-  uploadButton: {
+  imageButton: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.primary,
     borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 16,
     gap: 8,
   },
-  uploadButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
+  imageButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.primary,
-    textAlign: "center",
   },
-  imagePreviewContainer: {
-    width: "100%",
-    aspectRatio: 3 / 4,
+  previewContainer: {
+    marginTop: 16,
     borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: colors.card,
-    position: "relative",
+    overflow: 'hidden',
+    backgroundColor: colors.meteor,
   },
-  imagePreview: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  removeImageButton: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-  },
-  measurementsSection: {
-    marginBottom: 32,
+  previewImage: {
+    width: '100%',
+    aspectRatio: 3 / 4,
+    resizeMode: 'cover',
   },
   inputContainer: {
     marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.text,
     marginBottom: 8,
   },
@@ -391,78 +281,30 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 12,
     padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 16,
+    alignItems: 'center',
+    marginVertical: 24,
   },
   analyzeButtonDisabled: {
-    backgroundColor: colors.textSecondary,
-    opacity: 0.5,
+    opacity: 0.6,
   },
   analyzeButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.card,
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.milkyWay,
   },
   errorContainer: {
-    backgroundColor: "#FEE2E2",
+    backgroundColor: colors.error,
     borderRadius: 12,
     padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
     marginBottom: 16,
   },
   errorText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.error,
+    color: colors.milkyWay,
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   resultsSection: {
-    marginTop: 16,
-    gap: 20,
-  },
-  suggestionsContainer: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-  },
-  suggestionsTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: 12,
-  },
-  suggestionItem: {
-    flexDirection: "row",
-    marginBottom: 8,
-    gap: 8,
-  },
-  suggestionBullet: {
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: "700",
-  },
-  suggestionText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  infoBox: {
-    backgroundColor: colors.highlight,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "flex-start",
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
+    marginTop: 24,
   },
 });
