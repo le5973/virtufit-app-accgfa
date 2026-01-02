@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
 
 export default function TabLayout() {
-  // Define the tabs configuration - all 7 tabs
+  // Define the tabs configuration - 6 tabs (removed AI Style)
   const tabs: TabBarItem[] = [
     {
       name: '(home)',
@@ -23,12 +23,6 @@ export default function TabLayout() {
       route: '/(tabs)/wishlist',
       icon: 'favorite',
       label: 'Wishlist',
-    },
-    {
-      name: 'ai-stylist',
-      route: '/(tabs)/ai-stylist',
-      icon: 'auto-awesome',
-      label: 'AI Style',
     },
     {
       name: 'social',
@@ -62,12 +56,11 @@ export default function TabLayout() {
         <Stack.Screen key="home" name="(home)" />
         <Stack.Screen key="wardrobe" name="wardrobe" />
         <Stack.Screen key="wishlist" name="wishlist" />
-        <Stack.Screen key="ai-stylist" name="ai-stylist" />
         <Stack.Screen key="social" name="social" />
         <Stack.Screen key="size-guide" name="size-guide" />
         <Stack.Screen key="profile" name="profile" />
       </Stack>
-      <FloatingTabBar tabs={tabs} containerWidth={420} />
+      <FloatingTabBar tabs={tabs} containerWidth={294} />
     </>
   );
 }
