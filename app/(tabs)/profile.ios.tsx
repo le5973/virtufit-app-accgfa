@@ -1,5 +1,4 @@
 
-import { colors } from '@/styles/commonStyles';
 import React from 'react';
 import { 
   View, 
@@ -10,113 +9,122 @@ import {
   Share,
   Alert
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { useSubscription } from '@/contexts/SubscriptionContext';
-import { useRouter } from 'expo-router';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
-  const { isSubscribed, subscriptionStatus, showPaywall } = useSubscription();
-  const router = useRouter();
-
   const handleShareProfile = async () => {
     try {
-      await Share.share({
-        message: 'Check out my Ervenista profile! Join me on the AI-powered fashion platform.',
+      const result = await Share.share({
+        message: 'Check out my Ervenista profile! Create your own 3D avatar at ervenista.app',
         title: 'Share Ervenista Profile',
       });
-    } catch (error) {
-      console.error('Error sharing profile:', error);
-    }
-  };
 
-  const handleManageSubscription = async () => {
-    if (isSubscribed) {
-      Alert.alert(
-        'Manage Subscription',
-        'To manage your subscription, please visit your device settings.',
-        [
-          { text: 'OK', style: 'default' }
-        ]
-      );
-    } else {
-      router.push('/paywall');
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Shared with activity type:', result.activityType);
+        } else {
+          console.log('Profile shared successfully');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.log('Error sharing profile:', error);
+      Alert.alert('Error', 'Failed to share profile');
     }
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Profile</Text>
-
-        {/* Subscription Status Card */}
-        <View style={styles.subscriptionCard}>
-          <View style={styles.subscriptionHeader}>
-            <MaterialIcons 
-              name={isSubscribed ? 'verified' : 'lock'} 
-              size={32} 
-              color={isSubscribed ? colors.primary : colors.textSecondary} 
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <View style={styles.header}>
+          <View style={styles.avatarPlaceholder}>
+            <IconSymbol 
+              ios_icon_name="person.circle.fill" 
+              android_material_icon_name="account-circle" 
+              size={80} 
+              color={colors.primary} 
             />
-            <View style={styles.subscriptionInfo}>
-              <Text style={styles.subscriptionTitle}>
-                {isSubscribed ? 'Premium Member' : 'Free Plan'}
-              </Text>
-              <Text style={styles.subscriptionStatus}>
-                Status: {subscriptionStatus}
-              </Text>
+          </View>
+          <Text style={styles.name}>Your Profile</Text>
+          <Text style={styles.subtitle}>Ervenista Avatar</Text>
+        </View>
+
+        <TouchableOpacity style={styles.shareButton} onPress={handleShareProfile}>
+          <IconSymbol 
+            ios_icon_name="square.and.arrow.up" 
+            android_material_icon_name="share" 
+            size={20} 
+            color={colors.milkyWay} 
+          />
+          <Text style={styles.shareButtonText}>Share Profile</Text>
+        </TouchableOpacity>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About Ervenista</Text>
+          <View style={styles.infoCard}>
+            <Text style={styles.infoText}>
+              Ervenista creates highly accurate 3D avatars using AI-powered body scanning technology. 
+              Upload your photo and measurements to see how clothes will look on you before buying.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Features</Text>
+          <View style={styles.featuresList}>
+            <View style={styles.featureItem}>
+              <IconSymbol 
+                ios_icon_name="camera.fill" 
+                android_material_icon_name="camera" 
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={styles.featureText}>AI Body Scanning</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <IconSymbol 
+                ios_icon_name="ruler.fill" 
+                android_material_icon_name="straighten" 
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={styles.featureText}>Precise Measurements</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <IconSymbol 
+                ios_icon_name="person.fill" 
+                android_material_icon_name="person" 
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={styles.featureText}>3D Avatar Creation</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <IconSymbol 
+                ios_icon_name="cart.fill" 
+                android_material_icon_name="shopping-cart" 
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={styles.featureText}>Virtual Try-On</Text>
             </View>
           </View>
-          
-          <TouchableOpacity 
-            style={[styles.subscriptionButton, isSubscribed && styles.subscriptionButtonActive]}
-            onPress={handleManageSubscription}
-          >
-            <Text style={[styles.subscriptionButtonText, isSubscribed && styles.subscriptionButtonTextActive]}>
-              {isSubscribed ? 'Manage Subscription' : 'Upgrade to Premium'}
-            </Text>
-          </TouchableOpacity>
-
-          {!isSubscribed && (
-            <View style={styles.premiumFeatures}>
-              <Text style={styles.premiumFeaturesTitle}>Premium Features:</Text>
-              <Text style={styles.premiumFeature}>• 7-day free trial</Text>
-              <Text style={styles.premiumFeature}>• AI Body Scanning</Text>
-              <Text style={styles.premiumFeature}>• Virtual Try-On</Text>
-              <Text style={styles.premiumFeature}>• Unlimited Wishlist</Text>
-              <Text style={styles.premiumFeature}>• AI Stylist Recommendations</Text>
-              <Text style={styles.premiumPrice}>Only £0.99/month after trial</Text>
-            </View>
-          )}
         </View>
 
-        {/* Profile Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Actions</Text>
-          
-          <TouchableOpacity style={styles.actionButton} onPress={handleShareProfile}>
-            <MaterialIcons name="share" size={24} color={colors.primary} />
-            <Text style={styles.actionButtonText}>Share Profile</Text>
-            <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton}>
-            <MaterialIcons name="settings" size={24} color={colors.primary} />
-            <Text style={styles.actionButtonText}>Settings</Text>
-            <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton}>
-            <MaterialIcons name="help" size={24} color={colors.primary} />
-            <Text style={styles.actionButtonText}>Help & Support</Text>
-            <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* App Info */}
-        <View style={styles.appInfo}>
-          <Text style={styles.appInfoText}>Ervenista v1.0.0</Text>
-          <Text style={styles.appInfoText}>Your AI Fashion Assistant</Text>
+          <Text style={styles.sectionTitle}>Measurements Tracked</Text>
+          <View style={styles.measurementsList}>
+            <Text style={styles.measurementItem}>• Bust</Text>
+            <Text style={styles.measurementItem}>• Waist</Text>
+            <Text style={styles.measurementItem}>• Hip</Text>
+            <Text style={styles.measurementItem}>• Shoulders</Text>
+            <Text style={styles.measurementItem}>• Arm Length</Text>
+            <Text style={styles.measurementItem}>• Legs Length</Text>
+            <Text style={styles.measurementItem}>• Feet Size</Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -128,118 +136,98 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
+  contentContainer: {
     padding: 20,
     paddingBottom: 100,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 24,
-  },
-  subscriptionCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  subscriptionHeader: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
+    marginBottom: 32,
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.highlight,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
-  subscriptionInfo: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  subscriptionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  name: {
+    fontSize: 24,
+    fontWeight: '800',
     color: colors.text,
     marginBottom: 4,
   },
-  subscriptionStatus: {
-    fontSize: 14,
+  subtitle: {
+    fontSize: 15,
     color: colors.textSecondary,
   },
-  subscriptionButton: {
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  subscriptionButtonActive: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  subscriptionButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  subscriptionButtonTextActive: {
-    color: colors.primary,
-  },
-  premiumFeatures: {
-    marginTop: 8,
-  },
-  premiumFeaturesTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  premiumFeature: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  premiumPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginTop: 8,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  actionButton: {
+  shareButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    padding: 16,
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
     borderRadius: 12,
-    marginBottom: 8,
+    padding: 16,
+    marginBottom: 32,
+    gap: 8,
+  },
+  shareButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.milkyWay,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  infoCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  actionButtonText: {
-    fontSize: 16,
-    color: colors.text,
-    marginLeft: 12,
-    flex: 1,
-  },
-  appInfo: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  appInfoText: {
-    fontSize: 12,
+  infoText: {
+    fontSize: 15,
     color: colors.textSecondary,
-    marginBottom: 4,
+    lineHeight: 24,
+  },
+  featuresList: {
+    gap: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 12,
+  },
+  featureText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  measurementsList: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 8,
+  },
+  measurementItem: {
+    fontSize: 15,
+    color: colors.text,
+    lineHeight: 24,
   },
 });
