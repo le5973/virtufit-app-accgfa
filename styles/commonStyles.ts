@@ -1,27 +1,26 @@
 
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
-// Cosmic color palette from the design
+// Altitude color palette - vibrant and energetic
 export const colors = {
-  // Primary colors
-  planetary: '#334EAC',      // Deep blue - primary actions
-  venus: '#BAD6EB',          // Light blue - accents
-  universe: '#7096D1',       // Medium blue - secondary
-  meteor: '#F7F2EB',         // Light cream - backgrounds
-  galaxy: '#081F5C',         // Dark blue - headers/emphasis
-  milkyWay: '#FFF9F0',       // Cream white - cards
-  sky: '#D0E3FF',            // Sky blue - highlights
+  // Primary colors from Altitude palette
+  blushPink: '#FFE5F1',      // Colour 1 - soft backgrounds
+  cyan: '#87F5F5',           // Colour 2 - bright accents
+  magenta: '#F042FF',        // Colour 3 - vibrant highlights
+  purple: '#7226FF',         // Colour 4 - primary actions
+  deepPurple: '#160078',     // Colour 5 - emphasis/headers
+  navy: '#010030',           // Colour 6 - dark text/backgrounds
   
   // Semantic colors
-  background: '#FFF9F0',     // Milky Way
-  text: '#081F5C',           // Galaxy
-  textSecondary: '#7096D1',  // Universe
-  primary: '#334EAC',        // Planetary
-  secondary: '#7096D1',      // Universe
-  accent: '#BAD6EB',         // Venus
+  background: '#FFE5F1',     // Blush pink for main background
+  text: '#010030',           // Navy for primary text
+  textSecondary: '#160078',  // Deep purple for secondary text
+  primary: '#7226FF',        // Purple for primary actions
+  secondary: '#F042FF',      // Magenta for secondary actions
+  accent: '#87F5F5',         // Cyan for accents
   card: '#FFFFFF',           // Pure white for cards
-  highlight: '#D0E3FF',      // Sky
-  border: '#BAD6EB',         // Venus
+  highlight: '#F042FF',      // Magenta for highlights
+  border: '#87F5F5',         // Cyan for borders
   error: '#EF4444',
 };
 
@@ -94,7 +93,7 @@ export const commonStyles = StyleSheet.create({
     padding: 16,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 2px 8px rgba(186, 214, 235, 0.3)',
+    boxShadow: '0px 2px 8px rgba(135, 245, 245, 0.3)',
     elevation: 2,
   },
   icon: {
