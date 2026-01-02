@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Stack } from 'expo-router';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
@@ -10,6 +11,24 @@ export default function TabLayout() {
       route: '/(tabs)/(home)/',
       icon: 'home',
       label: 'Home',
+    },
+    {
+      name: 'wardrobe',
+      route: '/(tabs)/wardrobe',
+      icon: 'shopping-bag',
+      label: 'Wardrobe',
+    },
+    {
+      name: 'wishlist',
+      route: '/(tabs)/wishlist',
+      icon: 'favorite',
+      label: 'Wishlist',
+    },
+    {
+      name: 'size-guide',
+      route: '/(tabs)/size-guide',
+      icon: 'straighten',
+      label: 'Sizes',
     },
     {
       name: 'profile',
@@ -29,9 +48,12 @@ export default function TabLayout() {
         }}
       >
         <Stack.Screen key="home" name="(home)" />
+        <Stack.Screen key="wardrobe" name="wardrobe" />
+        <Stack.Screen key="wishlist" name="wishlist" />
+        <Stack.Screen key="size-guide" name="size-guide" />
         <Stack.Screen key="profile" name="profile" />
       </Stack>
-      <FloatingTabBar tabs={tabs} />
+      <FloatingTabBar tabs={tabs} containerWidth={380} />
     </>
   );
 }

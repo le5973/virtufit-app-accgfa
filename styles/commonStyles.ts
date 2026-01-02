@@ -22,6 +22,8 @@ export const colors = {
   highlight: '#F042FF',      // Magenta for highlights
   border: '#87F5F5',         // Cyan for borders
   error: '#EF4444',
+  milkyWay: '#FFFFFF',       // White for text on dark backgrounds
+  meteor: '#E5E7EB',         // Light gray for subtle backgrounds
 };
 
 export const buttonStyles = StyleSheet.create({

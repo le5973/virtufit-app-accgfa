@@ -8,12 +8,16 @@ export const useBodyAnalysis = (bodyScan: BodyScan) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (bodyScan.image && bodyScan.height && bodyScan.weight) {
+    // Check if we have either image or video
+    const hasMedia = bodyScan.image || bodyScan.video;
+    
+    if (hasMedia && bodyScan.height && bodyScan.weight) {
       setLoading(true);
       setError(null);
       
       // Simulate AI body analysis with mock data
       // In production, this would call your AI backend
+      // For video, you would extract frames and analyze them
       setTimeout(() => {
         try {
           // Generate realistic measurements based on height and weight
@@ -30,7 +34,7 @@ export const useBodyAnalysis = (bodyScan: BodyScan) => {
               legsLength: Math.round(80 * heightFactor),
               feetSize: Math.round(24 + (heightFactor - 1) * 3),
             },
-            confidence: 0.85,
+            confidence: bodyScan.video ? 0.92 : 0.85, // Higher confidence for video
           });
           setLoading(false);
         } catch (err) {
@@ -40,7 +44,7 @@ export const useBodyAnalysis = (bodyScan: BodyScan) => {
         }
       }, 2000);
     }
-  }, [bodyScan.image, bodyScan.height, bodyScan.weight]);
+  }, [bodyScan.image, bodyScan.video, bodyScan.height, bodyScan.weight]);
 
   return { result, loading, error };
 };

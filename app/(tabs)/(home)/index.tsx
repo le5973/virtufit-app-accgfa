@@ -24,6 +24,7 @@ export default function HomeScreen() {
     height: 0,
     weight: 0,
     image: null,
+    video: null,
   });
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
@@ -46,12 +47,37 @@ export default function HomeScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri }));
+        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri, video: null }));
         setHasAnalyzed(false);
       }
     } catch (err) {
       console.log('Error picking image:', err);
       Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const pickVideo = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['videos'],
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setBodyScan(prev => ({ ...prev, video: result.assets[0].uri, image: null }));
+        setHasAnalyzed(false);
+      }
+    } catch (err) {
+      console.log('Error picking video:', err);
+      Alert.alert('Error', 'Failed to pick video');
     }
   };
 
@@ -71,7 +97,7 @@ export default function HomeScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri }));
+        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri, video: null }));
         setHasAnalyzed(false);
       }
     } catch (err) {
@@ -81,8 +107,8 @@ export default function HomeScreen() {
   };
 
   const handleAnalyze = () => {
-    if (!bodyScan.image) {
-      Alert.alert('Missing Image', 'Please upload or take a photo first');
+    if (!bodyScan.image && !bodyScan.video) {
+      Alert.alert('Missing Media', 'Please upload a photo or video first');
       return;
     }
     if (!bodyScan.height || bodyScan.height <= 0) {
@@ -101,12 +127,12 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Create Your Avatar</Text>
         <Text style={styles.subtitle}>
-          Upload a photo and provide your measurements to create an accurate 3D avatar
+          Upload a photo or video and provide your measurements to create an accurate 3D avatar
         </Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Step 1: Upload Photo</Text>
+        <Text style={styles.sectionTitle}>Step 1: Upload Photo or Video</Text>
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
             <IconSymbol 
@@ -115,7 +141,16 @@ export default function HomeScreen() {
               size={24} 
               color={colors.primary} 
             />
-            <Text style={styles.imageButtonText}>Choose Photo</Text>
+            <Text style={styles.imageButtonText}>Photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.imageButton} onPress={pickVideo}>
+            <IconSymbol 
+              ios_icon_name="videocam" 
+              android_material_icon_name="videocam" 
+              size={24} 
+              color={colors.primary} 
+            />
+            <Text style={styles.imageButtonText}>Video</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
             <IconSymbol 
@@ -124,13 +159,48 @@ export default function HomeScreen() {
               size={24} 
               color={colors.primary} 
             />
-            <Text style={styles.imageButtonText}>Take Photo</Text>
+            <Text style={styles.imageButtonText}>Camera</Text>
           </TouchableOpacity>
         </View>
 
         {bodyScan.image && (
           <View style={styles.previewContainer}>
             <Image source={{ uri: bodyScan.image }} style={styles.previewImage} />
+            <View style={styles.mediaTypeLabel}>
+              <IconSymbol 
+                ios_icon_name="photo" 
+                android_material_icon_name="photo" 
+                size={16} 
+                color={colors.milkyWay} 
+              />
+              <Text style={styles.mediaTypeLabelText}>Photo</Text>
+            </View>
+          </View>
+        )}
+
+        {bodyScan.video && (
+          <View style={styles.previewContainer}>
+            <View style={styles.videoPlaceholder}>
+              <IconSymbol 
+                ios_icon_name="videocam" 
+                android_material_icon_name="videocam" 
+                size={48} 
+                color={colors.primary} 
+              />
+              <Text style={styles.videoPlaceholderText}>Video uploaded</Text>
+              <Text style={styles.videoPlaceholderSubtext}>
+                Higher accuracy for body measurements
+              </Text>
+            </View>
+            <View style={styles.mediaTypeLabel}>
+              <IconSymbol 
+                ios_icon_name="videocam" 
+                android_material_icon_name="videocam" 
+                size={16} 
+                color={colors.milkyWay} 
+              />
+              <Text style={styles.mediaTypeLabelText}>Video</Text>
+            </View>
           </View>
         )}
       </View>
@@ -229,22 +299,22 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   imageButton: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.primary,
     borderRadius: 12,
-    padding: 16,
-    gap: 8,
+    padding: 12,
+    gap: 6,
   },
   imageButtonText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.primary,
   },
@@ -253,11 +323,49 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: colors.meteor,
+    position: 'relative',
   },
   previewImage: {
     width: '100%',
     aspectRatio: 3 / 4,
     resizeMode: 'cover',
+  },
+  videoPlaceholder: {
+    width: '100%',
+    aspectRatio: 3 / 4,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  videoPlaceholderText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 16,
+  },
+  videoPlaceholderSubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  mediaTypeLabel: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  mediaTypeLabelText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.milkyWay,
   },
   inputContainer: {
     marginBottom: 16,
