@@ -19,16 +19,16 @@ export default function TabLayout() {
       label: 'Wardrobe',
     },
     {
-      name: 'wishlist',
-      route: '/(tabs)/wishlist',
-      icon: 'favorite',
-      label: 'Wishlist',
+      name: 'ai-stylist',
+      route: '/(tabs)/ai-stylist',
+      icon: 'auto-awesome',
+      label: 'AI Style',
     },
     {
-      name: 'size-guide',
-      route: '/(tabs)/size-guide',
-      icon: 'straighten',
-      label: 'Sizes',
+      name: 'social',
+      route: '/(tabs)/social',
+      icon: 'group',
+      label: 'Social',
     },
     {
       name: 'profile',
@@ -51,6 +51,8 @@ export default function TabLayout() {
         <Stack.Screen key="wardrobe" name="wardrobe" />
         <Stack.Screen key="wishlist" name="wishlist" />
         <Stack.Screen key="size-guide" name="size-guide" />
+        <Stack.Screen key="ai-stylist" name="ai-stylist" />
+        <Stack.Screen key="social" name="social" />
         <Stack.Screen key="profile" name="profile" />
       </Stack>
       <FloatingTabBar tabs={tabs} containerWidth={380} />
