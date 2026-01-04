@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { BodyScan, BodyAnalysisResult } from '@/types/bodyMeasurements';
+import { useAvatarGeneration } from './useAvatarGeneration';
 
 export const useBodyAnalysis = (bodyScan: BodyScan) => {
   const [result, setResult] = useState<BodyAnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { generateAvatar, avatarData } = useAvatarGeneration();
 
   useEffect(() => {
     // Check if we have either image or video
@@ -18,23 +20,29 @@ export const useBodyAnalysis = (bodyScan: BodyScan) => {
       // Simulate AI body analysis with mock data
       // In production, this would call your AI backend
       // For video, you would extract frames and analyze them
-      setTimeout(() => {
+      setTimeout(async () => {
         try {
           // Generate realistic measurements based on height and weight
           const heightFactor = bodyScan.height / 170; // normalized to average height
           const weightFactor = bodyScan.weight / 70; // normalized to average weight
           
+          const measurements = {
+            bust: Math.round(85 * weightFactor),
+            waist: Math.round(70 * weightFactor),
+            hip: Math.round(95 * weightFactor),
+            shoulders: Math.round(40 * heightFactor),
+            armLength: Math.round(60 * heightFactor),
+            legsLength: Math.round(80 * heightFactor),
+            feetSize: Math.round(24 + (heightFactor - 1) * 3),
+          };
+
+          // Generate AI avatar
+          const avatar = await generateAvatar(bodyScan, measurements);
+
           setResult({
-            measurements: {
-              bust: Math.round(85 * weightFactor),
-              waist: Math.round(70 * weightFactor),
-              hip: Math.round(95 * weightFactor),
-              shoulders: Math.round(40 * heightFactor),
-              armLength: Math.round(60 * heightFactor),
-              legsLength: Math.round(80 * heightFactor),
-              feetSize: Math.round(24 + (heightFactor - 1) * 3),
-            },
+            measurements,
             confidence: bodyScan.video ? 0.92 : 0.85, // Higher confidence for video
+            avatarUrl: avatar?.avatarUrl,
           });
           setLoading(false);
         } catch (err) {

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { colors } from '@/styles/commonStyles';
 import { AvatarPreview } from '@/components/AvatarPreview';
 import { useBodyAnalysis } from '@/hooks/useBodyAnalysis';
+import { useAvatarGeneration } from '@/hooks/useAvatarGeneration';
 import { IconSymbol } from '@/components/IconSymbol';
 import { BodyScan } from '@/types/bodyMeasurements';
 
@@ -28,6 +29,12 @@ export default function HomeScreen() {
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
   const { result, loading, error } = useBodyAnalysis(bodyScan);
+  const { avatarData, loadAvatar } = useAvatarGeneration();
+
+  // Load existing avatar on mount
+  useEffect(() => {
+    loadAvatar();
+  }, [loadAvatar]);
 
   const pickImage = async () => {
     try {
@@ -121,14 +128,38 @@ export default function HomeScreen() {
     setHasAnalyzed(true);
   };
 
+  // Show existing avatar if available and no new analysis
+  const showExistingAvatar = avatarData && !hasAnalyzed && !bodyScan.image && !bodyScan.video;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <Text style={styles.title}>Create Your Avatar</Text>
+        <Text style={styles.title}>Create Your AI Avatar</Text>
         <Text style={styles.subtitle}>
-          Upload a photo or video and provide your measurements to create an accurate 3D avatar
+          Upload a photo or video and provide your measurements to create an accurate 3D avatar for virtual try-on
         </Text>
       </View>
+
+      {showExistingAvatar && (
+        <View style={styles.existingAvatarSection}>
+          <AvatarPreview
+            avatarUrl={avatarData.avatarUrl}
+            measurements={avatarData.measurements}
+            confidence={avatarData.confidence}
+          />
+          <View style={styles.updatePrompt}>
+            <IconSymbol
+              ios_icon_name="info"
+              android_material_icon_name="info"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.updatePromptText}>
+              Upload new photos below to update your avatar
+            </Text>
+          </View>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Step 1: Upload Photo or Video</Text>
@@ -238,7 +269,15 @@ export default function HomeScreen() {
         {loading ? (
           <ActivityIndicator color={colors.milkyWay} />
         ) : (
-          <Text style={styles.analyzeButtonText}>Analyze Body</Text>
+          <>
+            <IconSymbol
+              ios_icon_name="auto-awesome"
+              android_material_icon_name="auto-awesome"
+              size={20}
+              color={colors.milkyWay}
+            />
+            <Text style={styles.analyzeButtonText}>Generate AI Avatar</Text>
+          </>
         )}
       </TouchableOpacity>
 
@@ -252,9 +291,24 @@ export default function HomeScreen() {
         <View style={styles.resultsSection}>
           <AvatarPreview
             imageUri={bodyScan.image || undefined}
+            avatarUrl={result.avatarUrl}
             measurements={result.measurements}
             confidence={result.confidence}
+            loading={loading}
           />
+          {result.avatarUrl && (
+            <View style={styles.successMessage}>
+              <IconSymbol
+                ios_icon_name="check-circle"
+                android_material_icon_name="check-circle"
+                size={24}
+                color={colors.galaxy}
+              />
+              <Text style={styles.successMessageText}>
+                Avatar created! Visit Wishlist or Wardrobe to try on clothes
+              </Text>
+            </View>
+          )}
         </View>
       )}
     </ScrollView>
@@ -286,6 +340,27 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  existingAvatarSection: {
+    marginBottom: 32,
+  },
+  updatePrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  updatePromptText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    flex: 1,
   },
   section: {
     marginBottom: 24,
@@ -385,11 +460,14 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   analyzeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.primary,
     borderRadius: 12,
     padding: 18,
-    alignItems: 'center',
     marginVertical: 24,
+    gap: 8,
   },
   analyzeButtonDisabled: {
     opacity: 0.6,
@@ -413,5 +491,23 @@ const styles = StyleSheet.create({
   },
   resultsSection: {
     marginTop: 24,
+  },
+  successMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    gap: 12,
+    borderWidth: 2,
+    borderColor: colors.galaxy,
+  },
+  successMessageText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+    lineHeight: 20,
   },
 });

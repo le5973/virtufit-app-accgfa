@@ -16,12 +16,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
+import { VirtualTryOn } from '@/components/VirtualTryOn';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistItem } from '@/types/bodyMeasurements';
 
 export default function WishlistScreen() {
   const { items, loading, addItem, removeItem, togglePublic, getPublicItems } = useWishlist();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     imageUrl: '',
@@ -99,14 +101,14 @@ export default function WishlistScreen() {
       return;
     }
 
-    const message = `Check out my Ervenista wishlist!\n\n${publicItems
+    const message = `Check out my wishlist!\n\n${publicItems
       .map((item, index) => `${index + 1}. ${item.name} - ${item.websiteName || 'Unknown Store'}`)
       .join('\n')}`;
 
     try {
       await Share.share({
         message,
-        title: 'My Ervenista Wishlist',
+        title: 'My Wishlist',
       });
     } catch (error) {
       console.log('Error sharing wishlist:', error);
@@ -120,69 +122,84 @@ export default function WishlistScreen() {
     });
   };
 
-  const renderWishlistItem = (item: WishlistItem) => (
-    <View key={item.id} style={styles.itemCard}>
-      <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
-      <View style={styles.itemInfo}>
-        <View style={styles.itemHeader}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          {item.isPublic && (
-            <View style={styles.publicBadge}>
+  const renderWishlistItem = (item: WishlistItem) => {
+    const isExpanded = expandedItemId === item.id;
+
+    return (
+      <View key={item.id} style={styles.itemCard}>
+        <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+        <View style={styles.itemInfo}>
+          <View style={styles.itemHeader}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            {item.isPublic && (
+              <View style={styles.publicBadge}>
+                <IconSymbol
+                  ios_icon_name="lock-open"
+                  android_material_icon_name="lock-open"
+                  size={14}
+                  color={colors.primary}
+                />
+                <Text style={styles.publicBadgeText}>Public</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.itemWebsite}>{item.websiteName || 'Unknown Store'}</Text>
+          {item.price && <Text style={styles.itemPrice}>{item.price}</Text>}
+          {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
+          
+          <View style={styles.itemActions}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleOpenWebsite(item.websiteUrl)}
+            >
               <IconSymbol
-                ios_icon_name="lock-open"
-                android_material_icon_name="lock-open"
-                size={14}
+                ios_icon_name="link"
+                android_material_icon_name="link"
+                size={18}
                 color={colors.primary}
               />
-              <Text style={styles.publicBadgeText}>Public</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.itemWebsite}>{item.websiteName || 'Unknown Store'}</Text>
-        {item.price && <Text style={styles.itemPrice}>{item.price}</Text>}
-        {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
-        <View style={styles.itemActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleOpenWebsite(item.websiteUrl)}
-          >
-            <IconSymbol
-              ios_icon_name="link"
-              android_material_icon_name="link"
-              size={18}
-              color={colors.primary}
-            />
-            <Text style={styles.actionButtonText}>View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, item.isPublic && styles.publicButton]}
-            onPress={() => handleTogglePublic(item.id, item.isPublic)}
-          >
-            <IconSymbol
-              ios_icon_name={item.isPublic ? 'lock-open' : 'lock'}
-              android_material_icon_name={item.isPublic ? 'lock-open' : 'lock'}
-              size={18}
-              color={item.isPublic ? colors.textSecondary : colors.primary}
-            />
-            <Text style={[styles.actionButtonText, item.isPublic && styles.publicButtonText]}>
-              {item.isPublic ? 'Make Private' : 'Make Public'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.removeButton]}
-            onPress={() => handleRemoveItem(item.id, item.name)}
-          >
-            <IconSymbol
-              ios_icon_name="delete"
-              android_material_icon_name="delete"
-              size={18}
-              color={colors.error}
-            />
-          </TouchableOpacity>
+              <Text style={styles.actionButtonText}>View</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, item.isPublic && styles.publicButton]}
+              onPress={() => handleTogglePublic(item.id, item.isPublic)}
+            >
+              <IconSymbol
+                ios_icon_name={item.isPublic ? 'lock-open' : 'lock'}
+                android_material_icon_name={item.isPublic ? 'lock-open' : 'lock'}
+                size={18}
+                color={item.isPublic ? colors.textSecondary : colors.primary}
+              />
+              <Text style={[styles.actionButtonText, item.isPublic && styles.publicButtonText]}>
+                {item.isPublic ? 'Private' : 'Public'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.removeButton]}
+              onPress={() => handleRemoveItem(item.id, item.name)}
+            >
+              <IconSymbol
+                ios_icon_name="delete"
+                android_material_icon_name="delete"
+                size={18}
+                color={colors.error}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Virtual Try-On Section */}
+          <VirtualTryOn
+            clothingImageUrl={item.imageUrl}
+            clothingName={item.name}
+            onTryOnComplete={(tryOnUrl) => {
+              console.log('Try-on complete:', tryOnUrl);
+              // TODO: Backend Integration - Save try-on image URL to item
+            }}
+          />
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -190,7 +207,7 @@ export default function WishlistScreen() {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.title}>My Wishlist</Text>
-            <Text style={styles.subtitle}>Share your favorite items with friends</Text>
+            <Text style={styles.subtitle}>Try on items with your AI avatar</Text>
           </View>
           {items.length > 0 && (
             <TouchableOpacity style={styles.shareButton} onPress={handleShareWishlist}>
@@ -328,7 +345,7 @@ export default function WishlistScreen() {
             />
             <Text style={styles.emptyStateText}>Your wishlist is empty</Text>
             <Text style={styles.emptyStateSubtext}>
-              Add items you love and share them with friends
+              Add items you love and try them on with your AI avatar
             </Text>
           </View>
         )}
@@ -537,6 +554,7 @@ const styles = StyleSheet.create({
   itemActions: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 12,
   },
   actionButton: {
     flex: 1,

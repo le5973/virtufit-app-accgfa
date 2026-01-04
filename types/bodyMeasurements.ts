@@ -19,6 +19,7 @@ export interface BodyScan {
 export interface BodyAnalysisResult {
   measurements: BodyMeasurements;
   confidence: number;
+  avatarUrl?: string; // AI-generated avatar image URL
 }
 
 export interface SavedOutfit {
@@ -32,6 +33,7 @@ export interface SavedOutfit {
   notes?: string;
   syncedToCloud?: boolean; // Supabase sync status
   userId?: string; // For cloud storage
+  tryOnImageUrl?: string; // Virtual try-on image with AI avatar
 }
 
 export interface WishlistItem {
@@ -46,6 +48,7 @@ export interface WishlistItem {
   isPublic: boolean;
   syncedToCloud?: boolean; // Supabase sync status
   userId?: string; // For cloud storage
+  tryOnImageUrl?: string; // Virtual try-on image with AI avatar
 }
 
 export interface SizeGuide {
@@ -83,5 +86,12 @@ export interface FriendRequest {
   toUserId: string;
   fromUser?: Friend;
   status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+export interface AvatarData {
+  avatarUrl: string;
+  measurements: BodyMeasurements;
+  confidence: number;
   createdAt: string;
 }

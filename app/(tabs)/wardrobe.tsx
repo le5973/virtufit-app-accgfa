@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
+import { VirtualTryOn } from '@/components/VirtualTryOn';
 import { useSavedOutfits } from '@/hooks/useSavedOutfits';
 import { SavedOutfit } from '@/types/bodyMeasurements';
 
@@ -117,6 +118,16 @@ export default function WardrobeScreen() {
             <Text style={[styles.actionButtonText, styles.removeButtonText]}>Remove</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Virtual Try-On Section */}
+        <VirtualTryOn
+          clothingImageUrl={outfit.imageUrl}
+          clothingName={outfit.name}
+          onTryOnComplete={(tryOnUrl) => {
+            console.log('Try-on complete:', tryOnUrl);
+            // TODO: Backend Integration - Save try-on image URL to outfit
+          }}
+        />
       </View>
     </View>
   );
@@ -125,7 +136,7 @@ export default function WardrobeScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>My Wardrobe</Text>
-        <Text style={styles.subtitle}>Virtual try-on outfits from your favorite stores</Text>
+        <Text style={styles.subtitle}>Virtual try-on with your AI avatar</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
@@ -223,7 +234,7 @@ export default function WardrobeScreen() {
             />
             <Text style={styles.emptyStateText}>No outfits saved yet</Text>
             <Text style={styles.emptyStateSubtext}>
-              Add outfits from your favorite websites to see how they look on you
+              Add outfits and see how they look on your AI avatar
             </Text>
           </View>
         )}
@@ -363,6 +374,7 @@ const styles = StyleSheet.create({
   outfitActions: {
     flexDirection: 'row',
     gap: 12,
+    marginBottom: 12,
   },
   actionButton: {
     flex: 1,
