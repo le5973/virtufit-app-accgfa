@@ -1,245 +1,247 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   TextInput,
   Alert,
   Linking,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { VirtualTryOn } from '@/components/VirtualTryOn';
-import { useSavedOutfits } from '@/hooks/useSavedOutfits';
-import { SavedOutfit } from '@/types/bodyMeasurements';
+import { colors } from '@/styles/commonStyles';
+import { AvatarPreview } from '@/components/AvatarPreview';
+import { useURL } from 'expo-linking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface OutfitItem {
+  id: string;
+  name: string;
+  productUrl: string;
+  addedAt: Date;
+}
+
+const OUTFITS_STORAGE_KEY = '@wardrobe_outfits';
 
 export default function WardrobeScreen() {
-  const { outfits, loading, addOutfit, removeOutfit } = useSavedOutfits();
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    imageUrl: '',
-    websiteUrl: '',
-    websiteName: '',
-    price: '',
-    notes: '',
-  });
+  const [outfits, setOutfits] = useState<OutfitItem[]>([]);
+  const [outfitName, setOutfitName] = useState('');
+  const [productUrl, setProductUrl] = useState('');
+  const [avatarUrl] = useState<string | undefined>(undefined); // TODO: Backend Integration - Load avatar from storage/API
+  
+  // Handle deep links from Share Extension
+  const url = useURL();
 
-  const handleAddOutfit = async () => {
-    if (!formData.name || !formData.imageUrl || !formData.websiteUrl) {
-      Alert.alert('Missing Information', 'Please fill in name, image URL, and website URL');
+  // Load saved outfits from storage
+  useEffect(() => {
+    loadOutfits();
+  }, []);
+
+  // Handle incoming URLs from Share Extension
+  useEffect(() => {
+    if (url) {
+      handleIncomingURL(url);
+    }
+  }, [url]);
+
+  // Check for shared URLs from Share Extension on mount
+  useEffect(() => {
+    checkSharedURL();
+  }, []);
+
+  const loadOutfits = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(OUTFITS_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Convert date strings back to Date objects
+        const outfitsWithDates = parsed.map((outfit: any) => ({
+          ...outfit,
+          addedAt: new Date(outfit.addedAt),
+        }));
+        setOutfits(outfitsWithDates);
+      }
+    } catch (error) {
+      console.error('Error loading outfits:', error);
+    }
+  };
+
+  const saveOutfits = async (newOutfits: OutfitItem[]) => {
+    try {
+      await AsyncStorage.setItem(OUTFITS_STORAGE_KEY, JSON.stringify(newOutfits));
+    } catch (error) {
+      console.error('Error saving outfits:', error);
+    }
+  };
+
+  const checkSharedURL = async () => {
+    if (Platform.OS === 'ios') {
+      // Check for shared URL from Share Extension via App Groups
+      // This would be set by the Share Extension
+      try {
+        const sharedURL = await AsyncStorage.getItem('@shared_product_url');
+        if (sharedURL) {
+          setProductUrl(sharedURL);
+          // Clear the shared URL
+          await AsyncStorage.removeItem('@shared_product_url');
+          Alert.alert('Product Link Received', 'A product link was shared to your wardrobe. Add a name to save it!');
+        }
+      } catch (error) {
+        console.error('Error checking shared URL:', error);
+      }
+    }
+  };
+
+  const handleIncomingURL = (incomingUrl: string) => {
+    try {
+      // Parse the URL - format: yourapp://wardrobe?url=<product_url>
+      const urlObj = new URL(incomingUrl);
+      const sharedProductUrl = urlObj.searchParams.get('url');
+      
+      if (sharedProductUrl) {
+        setProductUrl(decodeURIComponent(sharedProductUrl));
+        Alert.alert('Product Link Received', 'A product link was shared to your wardrobe. Add a name to save it!');
+      }
+    } catch (error) {
+      console.error('Error parsing incoming URL:', error);
+    }
+  };
+
+  const handleAddOutfit = () => {
+    if (!outfitName.trim()) {
+      Alert.alert('Error', 'Please enter an outfit name');
+      return;
+    }
+    if (!productUrl.trim()) {
+      Alert.alert('Error', 'Please paste a product URL');
       return;
     }
 
-    try {
-      await addOutfit(formData);
-      setFormData({
-        name: '',
-        imageUrl: '',
-        websiteUrl: '',
-        websiteName: '',
-        price: '',
-        notes: '',
-      });
-      setShowAddForm(false);
-      Alert.alert('Success', 'Outfit added to your wardrobe!');
-    } catch (error) {
-      console.log('Error adding outfit:', error);
-      Alert.alert('Error', 'Failed to add outfit');
-    }
+    const newOutfit: OutfitItem = {
+      id: Date.now().toString(),
+      name: outfitName.trim(),
+      productUrl: productUrl.trim(),
+      addedAt: new Date(),
+    };
+
+    const updatedOutfits = [newOutfit, ...outfits];
+    setOutfits(updatedOutfits);
+    saveOutfits(updatedOutfits);
+    setOutfitName('');
+    setProductUrl('');
+    Alert.alert('Success', 'Outfit added to wardrobe!');
   };
 
   const handleRemoveOutfit = (id: string, name: string) => {
-    Alert.alert(
-      'Remove Outfit',
-      `Remove "${name}" from your wardrobe?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await removeOutfit(id);
-            } catch (error) {
-              console.log('Error removing outfit:', error);
-              Alert.alert('Error', 'Failed to remove outfit');
-            }
-          },
+    Alert.alert('Remove Outfit', `Remove "${name}" from wardrobe?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          const updatedOutfits = outfits.filter((o) => o.id !== id);
+          setOutfits(updatedOutfits);
+          saveOutfits(updatedOutfits);
         },
-      ]
+      },
+    ]);
+  };
+
+  const handleOpenProduct = (url: string) => {
+    Linking.openURL(url).catch(() =>
+      Alert.alert('Error', 'Could not open product link')
     );
   };
 
-  const handleOpenWebsite = (url: string) => {
-    Linking.openURL(url).catch(err => {
-      console.log('Error opening URL:', err);
-      Alert.alert('Error', 'Could not open website');
-    });
-  };
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.title}>My Wardrobe</Text>
 
-  const renderOutfitCard = (outfit: SavedOutfit) => (
-    <View key={outfit.id} style={styles.outfitCard}>
-      <Image source={{ uri: outfit.imageUrl }} style={styles.outfitImage} />
-      <View style={styles.outfitInfo}>
-        <Text style={styles.outfitName}>{outfit.name}</Text>
-        <Text style={styles.outfitWebsite}>{outfit.websiteName || 'Unknown Store'}</Text>
-        {outfit.price && <Text style={styles.outfitPrice}>{outfit.price}</Text>}
-        {outfit.notes && <Text style={styles.outfitNotes}>{outfit.notes}</Text>}
-        <View style={styles.outfitActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleOpenWebsite(outfit.websiteUrl)}
-          >
-            <IconSymbol
-              ios_icon_name="link"
-              android_material_icon_name="link"
-              size={20}
-              color={colors.primary}
-            />
-            <Text style={styles.actionButtonText}>View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.removeButton]}
-            onPress={() => handleRemoveOutfit(outfit.id, outfit.name)}
-          >
-            <IconSymbol
-              ios_icon_name="delete"
-              android_material_icon_name="delete"
-              size={20}
-              color={colors.error}
-            />
-            <Text style={[styles.actionButtonText, styles.removeButtonText]}>Remove</Text>
+        {/* Avatar Display with Podium */}
+        <View style={styles.avatarSection}>
+          <AvatarPreview avatarUrl={avatarUrl} />
+        </View>
+
+        {/* Add Outfit Form */}
+        <View style={styles.addSection}>
+          <Text style={styles.sectionTitle}>Add New Outfit</Text>
+          <Text style={styles.helpText}>
+            Share product links from Safari using the Share button, or paste them here
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Outfit Name (e.g., Summer Dress)"
+            placeholderTextColor={colors.textSecondary}
+            value={outfitName}
+            onChangeText={setOutfitName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Paste Product URL"
+            placeholderTextColor={colors.textSecondary}
+            value={productUrl}
+            onChangeText={setProductUrl}
+            autoCapitalize="none"
+            keyboardType="url"
+            multiline
+          />
+          <TouchableOpacity style={styles.addButton} onPress={handleAddOutfit}>
+            <IconSymbol ios_icon_name="plus" android_material_icon_name="add" size={20} color="#fff" />
+            <Text style={styles.addButtonText}>Add to Wardrobe</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Virtual Try-On Section */}
-        <VirtualTryOn
-          clothingImageUrl={outfit.imageUrl}
-          clothingName={outfit.name}
-          onTryOnComplete={(tryOnUrl) => {
-            console.log('Try-on complete:', tryOnUrl);
-            // TODO: Backend Integration - Save try-on image URL to outfit
-          }}
-        />
-      </View>
-    </View>
-  );
-
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Wardrobe</Text>
-        <Text style={styles.subtitle}>Virtual try-on with your AI avatar</Text>
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        {!showAddForm && (
-          <TouchableOpacity style={styles.addButton} onPress={() => setShowAddForm(true)}>
-            <IconSymbol
-              ios_icon_name="add"
-              android_material_icon_name="add"
-              size={24}
-              color={colors.milkyWay}
-            />
-            <Text style={styles.addButtonText}>Add Outfit</Text>
-          </TouchableOpacity>
-        )}
-
-        {showAddForm && (
-          <View style={styles.addForm}>
-            <View style={styles.formHeader}>
-              <Text style={styles.formTitle}>Add New Outfit</Text>
-              <TouchableOpacity onPress={() => setShowAddForm(false)}>
-                <IconSymbol
-                  ios_icon_name="close"
-                  android_material_icon_name="close"
-                  size={24}
-                  color={colors.text}
-                />
-              </TouchableOpacity>
+        {/* Outfits List */}
+        <View style={styles.outfitsSection}>
+          <Text style={styles.sectionTitle}>Saved Outfits ({outfits.length})</Text>
+          {outfits.length === 0 ? (
+            <View style={styles.emptyState}>
+              <IconSymbol 
+                ios_icon_name="tshirt" 
+                android_material_icon_name="checkroom" 
+                size={48} 
+                color={colors.textSecondary} 
+              />
+              <Text style={styles.emptyText}>No outfits yet. Add your first one!</Text>
+              <Text style={styles.emptySubtext}>
+                Tip: Use the Share button in Safari to quickly add products
+              </Text>
             </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Outfit Name"
-              value={formData.name}
-              onChangeText={(text) => setFormData({ ...formData, name: text })}
-              placeholderTextColor={colors.textSecondary}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Image URL"
-              value={formData.imageUrl}
-              onChangeText={(text) => setFormData({ ...formData, imageUrl: text })}
-              placeholderTextColor={colors.textSecondary}
-              autoCapitalize="none"
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Website URL"
-              value={formData.websiteUrl}
-              onChangeText={(text) => setFormData({ ...formData, websiteUrl: text })}
-              placeholderTextColor={colors.textSecondary}
-              autoCapitalize="none"
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Store Name (e.g., Zara, H&M)"
-              value={formData.websiteName}
-              onChangeText={(text) => setFormData({ ...formData, websiteName: text })}
-              placeholderTextColor={colors.textSecondary}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Price (optional)"
-              value={formData.price}
-              onChangeText={(text) => setFormData({ ...formData, price: text })}
-              placeholderTextColor={colors.textSecondary}
-            />
-
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Notes (optional)"
-              value={formData.notes}
-              onChangeText={(text) => setFormData({ ...formData, notes: text })}
-              placeholderTextColor={colors.textSecondary}
-              multiline
-              numberOfLines={3}
-            />
-
-            <TouchableOpacity style={styles.submitButton} onPress={handleAddOutfit}>
-              <Text style={styles.submitButtonText}>Save Outfit</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {outfits.length === 0 && !showAddForm && (
-          <View style={styles.emptyState}>
-            <IconSymbol
-              ios_icon_name="shopping-bag"
-              android_material_icon_name="shopping-bag"
-              size={64}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.emptyStateText}>No outfits saved yet</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Add outfits and see how they look on your AI avatar
-            </Text>
-          </View>
-        )}
-
-        {outfits.map(renderOutfitCard)}
+          ) : (
+            outfits.map((outfit) => (
+              <View key={outfit.id} style={styles.outfitCard}>
+                <View style={styles.outfitInfo}>
+                  <Text style={styles.outfitName}>{outfit.name}</Text>
+                  <Text style={styles.outfitUrl} numberOfLines={1}>
+                    {outfit.productUrl}
+                  </Text>
+                  <Text style={styles.outfitDate}>
+                    Added {outfit.addedAt.toLocaleDateString()}
+                  </Text>
+                </View>
+                <View style={styles.outfitActions}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleOpenProduct(outfit.productUrl)}
+                  >
+                    <IconSymbol ios_icon_name="link" android_material_icon_name="link" size={20} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleRemoveOutfit(outfit.id, outfit.name)}
+                  >
+                    <IconSymbol ios_icon_name="trash" android_material_icon_name="delete" size={20} color="#FF3B30" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -249,173 +251,114 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
-  header: {
-    padding: 20,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
+  scrollContent: {
     padding: 20,
     paddingBottom: 100,
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    gap: 8,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.milkyWay,
-  },
-  addForm: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  formHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 20,
+  },
+  avatarSection: {
+    marginBottom: 30,
+  },
+  addSection: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 15,
+  },
+  helpText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 15,
+    lineHeight: 20,
   },
   input: {
     backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 15,
-    color: colors.text,
-    marginBottom: 12,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    padding: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.milkyWay,
-  },
-  outfitCard: {
-    backgroundColor: colors.card,
     borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  outfitImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  outfitInfo: {
-    padding: 16,
-  },
-  outfitName: {
-    fontSize: 18,
-    fontWeight: '700',
+    padding: 15,
+    marginBottom: 12,
     color: colors.text,
-    marginBottom: 4,
-  },
-  outfitWebsite: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  outfitPrice: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    marginBottom: 8,
   },
-  outfitNotes: {
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  outfitActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  actionButton: {
-    flex: 1,
+  addButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 8,
-    padding: 10,
-    gap: 6,
+    gap: 8,
   },
-  actionButtonText: {
-    fontSize: 14,
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
-    color: colors.primary,
   },
-  removeButton: {
-    borderColor: colors.error,
-  },
-  removeButtonText: {
-    color: colors.error,
+  outfitsSection: {
+    marginBottom: 20,
   },
   emptyState: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
+    padding: 40,
   },
-  emptyStateText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
+  emptyText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontSize: 16,
     marginTop: 16,
     marginBottom: 8,
   },
-  emptyStateSubtext: {
-    fontSize: 14,
+  emptySubtext: {
     color: colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 40,
-    lineHeight: 20,
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  outfitCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  outfitInfo: {
+    flex: 1,
+    marginRight: 10,
+  },
+  outfitName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  outfitUrl: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  outfitDate: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    opacity: 0.7,
+  },
+  outfitActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  actionButton: {
+    padding: 8,
   },
 });

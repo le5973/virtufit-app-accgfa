@@ -1,48 +1,63 @@
+
 {
   "expo": {
-    "name": "VirtuFit",
-    "slug": "VirtuFit",
+    "name": "VirtualFit",
+    "slug": "virtualfit",
     "version": "1.0.0",
+    "scheme": "virtualfit",
     "orientation": "portrait",
-    "icon": "./assets/images/natively-dark.png",
+    "icon": "./assets/images/final_quest_240x240.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
+      "image": "./assets/images/final_quest_240x240.png",
       "resizeMode": "contain",
-      "backgroundColor": "#7226FF"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.virtualfit.app",
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Ervenista",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["virtualfit"]
+          }
+        ],
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photos to generate your AI avatar.",
+        "NSCameraUsageDescription": "This app needs access to your camera to take photos for your AI avatar."
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.virtualfit.app"
+        ]
       }
     },
     "android": {
+      "package": "com.virtualfit.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#7226FF"
+        "foregroundImage": "./assets/images/final_quest_240x240.png",
+        "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Ervenista"
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/images/final_quest_240x240.png",
       "bundler": "metro"
     },
     "plugins": [
-      "expo-font",
       "expo-router",
-      "expo-web-browser"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to generate your AI avatar."
+        }
+      ]
     ],
-    "scheme": "ervenista",
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "router": {}
     }
-  },
-  "scheme": "VirtuFit"
+  }
 }
