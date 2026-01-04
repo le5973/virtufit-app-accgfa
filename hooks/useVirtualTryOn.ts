@@ -1,36 +1,69 @@
 
 import { useState } from 'react';
-import { apiPost } from '@/utils/api';
+import Constants from 'expo-constants';
+
+// Get backend URL from app.json configuration
+const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || '';
+
+export interface VirtualTryOnResult {
+  imageUrl: string;
+  confidence: number;
+  processingTime: number;
+}
 
 export const useVirtualTryOn = () => {
-  const [tryOnResult, setTryOnResult] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<VirtualTryOnResult | null>(null);
 
   const tryOnClothing = async (avatarUri: string, clothingImageUrl: string) => {
     setIsProcessing(true);
     setError(null);
+    setResult(null);
     
     try {
       console.log('Processing virtual try-on...');
       
-      // TODO: Backend Integration - Call the virtual try-on API
-      // POST /api/virtual-tryon with avatarUri, clothingImageUrl
-      // Backend will:
-      // 1. Take the background-removed AI avatar
-      // 2. Extract clothing from the clothing image URL
-      // 3. Visually overlay/composite the clothing onto the AI model
-      // 4. Return the final try-on image URL
-      const response = await apiPost('/api/virtual-tryon', {
-        avatarUri,
-        clothingImageUrl,
+      if (!BACKEND_URL || BACKEND_URL === 'BACKEND_URL_PLACEHOLDER') {
+        throw new Error('Backend URL not configured. Please wait for backend deployment.');
+      }
+
+      // TODO: Backend Integration - Call virtual try-on API
+      // The backend will:
+      // 1. Take the AI avatar with aesthetic background
+      // 2. Overlay the clothing item onto the avatar
+      // 3. Use AI to ensure proper fit and realistic appearance
+      // 4. Return the final image with clothing on avatar
+      
+      const response = await fetch(`${BACKEND_URL}/api/virtual-tryon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          avatarUrl: avatarUri,
+          clothingUrl: clothingImageUrl,
+        }),
       });
 
-      const resultUri = response.tryOnImageUrl;
-      setTryOnResult(resultUri);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Virtual try-on error:', response.status, errorText);
+        throw new Error(`Failed to process virtual try-on: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Virtual try-on response:', data);
       
-      console.log('Virtual try-on completed:', resultUri);
-      return resultUri;
+      const tryOnResult: VirtualTryOnResult = {
+        imageUrl: data.imageUrl || data.url,
+        confidence: data.confidence || 0.95,
+        processingTime: data.processingTime || 0,
+      };
+      
+      setResult(tryOnResult);
+      return tryOnResult;
     } catch (err: any) {
       console.error('Virtual try-on failed:', err);
       const errorMessage = err?.message || 'Failed to process virtual try-on. Please try again.';
@@ -42,15 +75,15 @@ export const useVirtualTryOn = () => {
   };
 
   const reset = () => {
-    setTryOnResult(null);
+    setResult(null);
     setError(null);
   };
 
   return { 
-    tryOnResult, 
     isProcessing, 
     error,
+    result,
     tryOnClothing,
-    reset 
+    reset
   };
 };

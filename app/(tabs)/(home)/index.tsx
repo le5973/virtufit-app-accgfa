@@ -101,7 +101,7 @@ export default function HomeScreen() {
       await generateAvatar(uploadedImage, heightNum, weightNum);
       Alert.alert(
         'Success!', 
-        'Your AI avatar has been created with background removed. Visit Wishlist or Wardrobe to try on clothes!',
+        'Your AI avatar has been created with an aesthetic background. Visit Wishlist or Wardrobe to try on clothes!',
         [{ text: 'OK' }]
       );
     } catch (err) {
@@ -114,11 +114,10 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Create Your AI Avatar</Text>
         <Text style={styles.subtitle}>
-          Upload a photo and provide measurements. AI will remove the background and create a clean avatar for virtual try-on.
+          Upload a photo and provide measurements. AI will remove the background and create a human body replica with an aesthetic background.
         </Text>
       </View>
 
-      {/* Show existing avatar if available */}
       {avatarUri && !uploadedImage && (
         <View style={styles.existingAvatarSection}>
           <Text style={styles.sectionTitle}>Your AI Avatar</Text>
@@ -218,12 +217,12 @@ export default function HomeScreen() {
         disabled={isGenerating}
       >
         {isGenerating ? (
-          <>
+          <React.Fragment>
             <ActivityIndicator color="#fff" />
             <Text style={styles.generateButtonText}>Processing...</Text>
-          </>
+          </React.Fragment>
         ) : (
-          <>
+          <React.Fragment>
             <IconSymbol
               ios_icon_name="sparkles"
               android_material_icon_name="auto-awesome"
@@ -233,7 +232,7 @@ export default function HomeScreen() {
             <Text style={styles.generateButtonText}>
               {avatarUri ? 'Update AI Avatar' : 'Generate AI Avatar'}
             </Text>
-          </>
+          </React.Fragment>
         )}
       </TouchableOpacity>
 
@@ -268,7 +267,7 @@ export default function HomeScreen() {
               size={20} 
               color={colors.primary} 
             />
-            <Text style={styles.processingStepText}>Generating AI human replica</Text>
+            <Text style={styles.processingStepText}>Generating AI human body replica</Text>
           </View>
           <View style={styles.processingStep}>
             <IconSymbol 
@@ -277,7 +276,16 @@ export default function HomeScreen() {
               size={20} 
               color={colors.primary} 
             />
-            <Text style={styles.processingStepText}>Creating clean avatar model</Text>
+            <Text style={styles.processingStepText}>Adding aesthetic background</Text>
+          </View>
+          <View style={styles.processingStep}>
+            <IconSymbol 
+              ios_icon_name="4.circle.fill" 
+              android_material_icon_name="looks-4" 
+              size={20} 
+              color={colors.primary} 
+            />
+            <Text style={styles.processingStepText}>Finalizing avatar model</Text>
           </View>
         </View>
       )}
@@ -293,7 +301,8 @@ export default function HomeScreen() {
           <Text style={styles.infoTitle}>How it works:</Text>
           <Text style={styles.infoText}>
             • AI removes the background from your photo{'\n'}
-            • Creates a clean human replica avatar{'\n'}
+            • Creates a clean human body replica{'\n'}
+            • Adds an aesthetic background{'\n'}
             • Ready for virtual clothing try-on{'\n'}
             • Visit Wishlist or Wardrobe to try on clothes
           </Text>

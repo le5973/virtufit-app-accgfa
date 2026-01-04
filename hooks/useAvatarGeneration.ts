@@ -1,9 +1,12 @@
 
 import { useState } from 'react';
-import { apiPost } from '@/utils/api';
+import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AVATAR_STORAGE_KEY = '@avatar_data';
+
+// Get backend URL from app.json configuration
+const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || '';
 
 export const useAvatarGeneration = () => {
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -15,21 +18,62 @@ export const useAvatarGeneration = () => {
     setError(null);
     
     try {
-      console.log('Generating avatar with background removal...');
+      console.log('Generating avatar with background removal and aesthetic background...');
       
-      // TODO: Backend Integration - Call the background removal + avatar generation API
-      // POST /api/generate-avatar with imageUri, height, weight
-      // Backend will:
-      // 1. Remove background from uploaded photo using AI
-      // 2. Generate clean AI avatar as human replica
-      // 3. Return avatar URL with transparent background
-      const response = await apiPost('/api/generate-avatar', {
-        imageUri,
-        height,
-        weight,
+      if (!BACKEND_URL || BACKEND_URL === 'BACKEND_URL_PLACEHOLDER') {
+        throw new Error('Backend URL not configured. Please wait for backend deployment.');
+      }
+
+      // TODO: Backend Integration - Upload image and generate AI avatar
+      // The backend will:
+      // 1. Remove background from uploaded photo using OpenAI vision API
+      // 2. Generate AI human body replica with aesthetic background
+      // 3. Apply measurements to create accurate proportions
+      // 4. Return avatar URL with aesthetic background
+      
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      
+      // Add image file
+      const filename = imageUri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+      
+      formData.append('image', {
+        uri: imageUri,
+        name: filename,
+        type: type,
+      } as any);
+      
+      // Add measurements
+      formData.append('height', height.toString());
+      formData.append('weight', weight.toString());
+      
+      console.log('Uploading to:', `${BACKEND_URL}/api/generate-avatar`);
+      
+      const response = await fetch(`${BACKEND_URL}/api/generate-avatar`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+        },
       });
 
-      const generatedAvatarUri = response.avatarUrl;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Backend error:', response.status, errorText);
+        throw new Error(`Failed to generate avatar: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Avatar generation response:', data);
+      
+      const generatedAvatarUri = data.avatarUrl || data.url;
+      
+      if (!generatedAvatarUri) {
+        throw new Error('No avatar URL returned from backend');
+      }
+      
       setAvatarUri(generatedAvatarUri);
       
       // Save to local storage
