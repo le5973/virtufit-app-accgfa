@@ -3,259 +3,163 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { useAvatarGeneration } from '@/hooks/useAvatarGeneration';
+import { useVirtualTryOn } from '@/hooks/useVirtualTryOn';
 
 interface VirtualTryOnProps {
+  avatarUri: string;
   clothingImageUrl: string;
   clothingName: string;
   onTryOnComplete?: (tryOnImageUrl: string) => void;
 }
 
 export const VirtualTryOn: React.FC<VirtualTryOnProps> = ({
+  avatarUri,
   clothingImageUrl,
   clothingName,
   onTryOnComplete,
 }) => {
-  const [showTryOn, setShowTryOn] = useState(false);
-  const [tryOnImageUrl, setTryOnImageUrl] = useState<string | null>(null);
-  const { avatarData, generateTryOn, loading } = useAvatarGeneration();
+  const { tryOnResult, isProcessing, error, tryOnClothing } = useVirtualTryOn();
 
   const handleTryOn = async () => {
-    if (!avatarData) {
-      Alert.alert(
-        'No Avatar Found',
-        'Please create your AI avatar first on the home screen to use virtual try-on',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    const result = await generateTryOn(clothingImageUrl);
-    if (result) {
-      setTryOnImageUrl(result);
-      setShowTryOn(true);
-      onTryOnComplete?.(result);
+    try {
+      const result = await tryOnClothing(avatarUri, clothingImageUrl);
+      if (result) {
+        onTryOnComplete?.(result);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to try on clothing. Please try again.');
     }
   };
 
-  if (!showTryOn) {
-    return (
+  return (
+    <View style={styles.container}>
       <TouchableOpacity
-        style={styles.tryOnButton}
+        style={[styles.button, isProcessing && styles.buttonDisabled]}
         onPress={handleTryOn}
-        disabled={loading}
+        disabled={isProcessing}
       >
-        {loading ? (
-          <ActivityIndicator size="small" color={colors.primary} />
+        {isProcessing ? (
+          <>
+            <ActivityIndicator color="#fff" />
+            <Text style={styles.buttonText}>Processing...</Text>
+          </>
         ) : (
           <>
-            <IconSymbol
-              ios_icon_name="auto-awesome"
-              android_material_icon_name="auto-awesome"
-              size={18}
-              color={colors.primary}
+            <IconSymbol 
+              ios_icon_name="sparkles" 
+              android_material_icon_name="auto-awesome" 
+              size={20} 
+              color="#fff" 
             />
-            <Text style={styles.tryOnButtonText}>Try On Avatar</Text>
+            <Text style={styles.buttonText}>Try On {clothingName}</Text>
           </>
         )}
       </TouchableOpacity>
-    );
-  }
 
-  return (
-    <View style={styles.tryOnContainer}>
-      <View style={styles.tryOnHeader}>
-        <View style={styles.tryOnHeaderLeft}>
-          <IconSymbol
-            ios_icon_name="auto-awesome"
-            android_material_icon_name="auto-awesome"
-            size={20}
-            color={colors.primary}
+      {error && (
+        <View style={styles.errorContainer}>
+          <IconSymbol 
+            ios_icon_name="exclamationmark.triangle" 
+            android_material_icon_name="warning" 
+            size={20} 
+            color={colors.error} 
           />
-          <Text style={styles.tryOnTitle}>Virtual Try-On</Text>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
-        <TouchableOpacity onPress={() => setShowTryOn(false)}>
-          <IconSymbol
-            ios_icon_name="close"
-            android_material_icon_name="close"
-            size={24}
-            color={colors.text}
-          />
-        </TouchableOpacity>
-      </View>
+      )}
 
-      <View style={styles.comparisonContainer}>
-        <View style={styles.comparisonItem}>
-          <Text style={styles.comparisonLabel}>Your Avatar</Text>
-          <Image
-            source={{ uri: avatarData?.avatarUrl }}
-            style={styles.comparisonImage}
+      {tryOnResult && (
+        <View style={styles.resultContainer}>
+          <View style={styles.resultHeader}>
+            <IconSymbol 
+              ios_icon_name="checkmark.circle.fill" 
+              android_material_icon_name="check-circle" 
+              size={24} 
+              color={colors.galaxy} 
+            />
+            <Text style={styles.resultTitle}>Try-On Result</Text>
+          </View>
+          <Image 
+            source={{ uri: tryOnResult }} 
+            style={styles.resultImage} 
+            resizeMode="contain" 
           />
+          <Text style={styles.resultSubtext}>
+            AI-generated preview with clothing overlay
+          </Text>
         </View>
-
-        <View style={styles.plusIcon}>
-          <IconSymbol
-            ios_icon_name="add"
-            android_material_icon_name="add"
-            size={24}
-            color={colors.textSecondary}
-          />
-        </View>
-
-        <View style={styles.comparisonItem}>
-          <Text style={styles.comparisonLabel}>{clothingName}</Text>
-          <Image
-            source={{ uri: clothingImageUrl }}
-            style={styles.comparisonImage}
-          />
-        </View>
-      </View>
-
-      <View style={styles.resultContainer}>
-        <View style={styles.resultHeader}>
-          <IconSymbol
-            ios_icon_name="check-circle"
-            android_material_icon_name="check-circle"
-            size={20}
-            color={colors.galaxy}
-          />
-          <Text style={styles.resultTitle}>Try-On Result</Text>
-        </View>
-        <Image
-          source={{ uri: tryOnImageUrl || clothingImageUrl }}
-          style={styles.resultImage}
-        />
-        <View style={styles.aiLabel}>
-          <IconSymbol
-            ios_icon_name="auto-awesome"
-            android_material_icon_name="auto-awesome"
-            size={16}
-            color={colors.milkyWay}
-          />
-          <Text style={styles.aiLabelText}>AI Generated</Text>
-        </View>
-      </View>
-
-      <Text style={styles.disclaimer}>
-        This is a preview based on your avatar&apos;s measurements. Actual fit may vary.
-      </Text>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  tryOnButton: {
+  container: {
+    marginVertical: 16,
+  },
+  button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 8,
-    padding: 10,
-    gap: 6,
-  },
-  tryOnButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  tryOnContainer: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  tryOnHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  tryOnHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
-  tryOnTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
+  buttonDisabled: {
+    opacity: 0.6,
   },
-  comparisonContainer: {
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.error,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    gap: 8,
   },
-  comparisonItem: {
+  errorText: {
     flex: 1,
-    alignItems: 'center',
-  },
-  comparisonLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  comparisonImage: {
-    width: '100%',
-    aspectRatio: 3 / 4,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-  },
-  plusIcon: {
-    marginHorizontal: 8,
+    color: colors.error,
+    fontSize: 14,
+    fontWeight: '500',
   },
   resultContainer: {
-    position: 'relative',
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: colors.background,
-    borderWidth: 2,
-    borderColor: colors.primary,
+    marginTop: 20,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
   },
   resultHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    padding: 12,
-    backgroundColor: colors.background,
+    marginBottom: 16,
   },
   resultTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.text,
   },
   resultImage: {
     width: '100%',
-    aspectRatio: 3 / 4,
-    resizeMode: 'cover',
+    height: 400,
+    borderRadius: 12,
+    backgroundColor: colors.background,
   },
-  aiLabel: {
-    position: 'absolute',
-    top: 60,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
-  },
-  aiLabelText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.milkyWay,
-  },
-  disclaimer: {
-    fontSize: 12,
+  resultSubtext: {
+    fontSize: 13,
     color: colors.textSecondary,
-    textAlign: 'center',
     marginTop: 12,
-    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });

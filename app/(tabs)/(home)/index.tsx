@@ -15,27 +15,20 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '@/styles/commonStyles';
 import { AvatarPreview } from '@/components/AvatarPreview';
-import { useBodyAnalysis } from '@/hooks/useBodyAnalysis';
 import { useAvatarGeneration } from '@/hooks/useAvatarGeneration';
 import { IconSymbol } from '@/components/IconSymbol';
-import { BodyScan } from '@/types/bodyMeasurements';
 
 export default function HomeScreen() {
-  const [bodyScan, setBodyScan] = useState<BodyScan>({
-    height: 0,
-    weight: 0,
-    image: null,
-    video: null,
-  });
-  const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [height, setHeight] = useState<string>('');
+  const [weight, setWeight] = useState<string>('');
 
-  const { result, loading, error } = useBodyAnalysis(bodyScan);
-  const { avatarData, loadAvatar } = useAvatarGeneration();
+  const { avatarUri, isGenerating, error, generateAvatar, loadAvatar } = useAvatarGeneration();
 
   // Load existing avatar on mount
   useEffect(() => {
     loadAvatar();
-  }, [loadAvatar]);
+  }, []);
 
   const pickImage = async () => {
     try {
@@ -54,37 +47,11 @@ export default function HomeScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri, video: null }));
-        setHasAnalyzed(false);
+        setUploadedImage(result.assets[0].uri);
       }
     } catch (err) {
       console.log('Error picking image:', err);
       Alert.alert('Error', 'Failed to pick image');
-    }
-  };
-
-  const pickVideo = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'],
-        allowsEditing: false,
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setBodyScan(prev => ({ ...prev, video: result.assets[0].uri, image: null }));
-        setHasAnalyzed(false);
-      }
-    } catch (err) {
-      console.log('Error picking video:', err);
-      Alert.alert('Error', 'Failed to pick video');
     }
   };
 
@@ -104,8 +71,7 @@ export default function HomeScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setBodyScan(prev => ({ ...prev, image: result.assets[0].uri, video: null }));
-        setHasAnalyzed(false);
+        setUploadedImage(result.assets[0].uri);
       }
     } catch (err) {
       console.log('Error taking photo:', err);
@@ -113,57 +79,74 @@ export default function HomeScreen() {
     }
   };
 
-  const handleAnalyze = () => {
-    if (!bodyScan.image && !bodyScan.video) {
-      Alert.alert('Missing Media', 'Please upload a photo or video first');
+  const handleGenerateAvatar = async () => {
+    if (!uploadedImage) {
+      Alert.alert('Missing Photo', 'Please upload a photo first');
       return;
     }
-    if (!bodyScan.height || bodyScan.height <= 0) {
-      Alert.alert('Missing Height', 'Please enter your height');
+    
+    const heightNum = parseFloat(height);
+    const weightNum = parseFloat(weight);
+    
+    if (!heightNum || heightNum <= 0) {
+      Alert.alert('Invalid Height', 'Please enter a valid height in cm');
       return;
     }
-    if (!bodyScan.weight || bodyScan.weight <= 0) {
-      Alert.alert('Missing Weight', 'Please enter your weight');
+    if (!weightNum || weightNum <= 0) {
+      Alert.alert('Invalid Weight', 'Please enter a valid weight in kg');
       return;
     }
-    setHasAnalyzed(true);
-  };
 
-  // Show existing avatar if available and no new analysis
-  const showExistingAvatar = avatarData && !hasAnalyzed && !bodyScan.image && !bodyScan.video;
+    try {
+      await generateAvatar(uploadedImage, heightNum, weightNum);
+      Alert.alert(
+        'Success!', 
+        'Your AI avatar has been created with background removed. Visit Wishlist or Wardrobe to try on clothes!',
+        [{ text: 'OK' }]
+      );
+    } catch (err) {
+      Alert.alert('Error', 'Failed to generate avatar. Please try again.');
+    }
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Text style={styles.title}>Create Your AI Avatar</Text>
         <Text style={styles.subtitle}>
-          Upload a photo or video and provide your measurements to create an accurate 3D avatar for virtual try-on
+          Upload a photo and provide measurements. AI will remove the background and create a clean avatar for virtual try-on.
         </Text>
       </View>
 
-      {showExistingAvatar && (
+      {/* Show existing avatar if available */}
+      {avatarUri && !uploadedImage && (
         <View style={styles.existingAvatarSection}>
+          <Text style={styles.sectionTitle}>Your AI Avatar</Text>
           <AvatarPreview
-            avatarUrl={avatarData.avatarUrl}
-            measurements={avatarData.measurements}
-            confidence={avatarData.confidence}
+            avatarUri={avatarUri}
+            isGenerating={false}
+            width={250}
+            height={350}
+            showBackgroundInfo={true}
           />
           <View style={styles.updatePrompt}>
             <IconSymbol
-              ios_icon_name="info"
+              ios_icon_name="info.circle"
               android_material_icon_name="info"
               size={20}
               color={colors.primary}
             />
             <Text style={styles.updatePromptText}>
-              Upload new photos below to update your avatar
+              Upload a new photo below to update your avatar
             </Text>
           </View>
         </View>
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Step 1: Upload Photo or Video</Text>
+        <Text style={styles.sectionTitle}>
+          {avatarUri ? 'Update Avatar' : 'Step 1: Upload Photo'}
+        </Text>
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
             <IconSymbol 
@@ -172,16 +155,7 @@ export default function HomeScreen() {
               size={24} 
               color={colors.primary} 
             />
-            <Text style={styles.imageButtonText}>Photo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.imageButton} onPress={pickVideo}>
-            <IconSymbol 
-              ios_icon_name="videocam" 
-              android_material_icon_name="videocam" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.imageButtonText}>Video</Text>
+            <Text style={styles.imageButtonText}>Gallery</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
             <IconSymbol 
@@ -194,58 +168,34 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {bodyScan.image && (
+        {uploadedImage && (
           <View style={styles.previewContainer}>
-            <Image source={{ uri: bodyScan.image }} style={styles.previewImage} />
+            <Image source={{ uri: uploadedImage }} style={styles.previewImage} />
             <View style={styles.mediaTypeLabel}>
               <IconSymbol 
                 ios_icon_name="photo" 
                 android_material_icon_name="photo" 
                 size={16} 
-                color={colors.milkyWay} 
+                color="#fff" 
               />
-              <Text style={styles.mediaTypeLabelText}>Photo</Text>
-            </View>
-          </View>
-        )}
-
-        {bodyScan.video && (
-          <View style={styles.previewContainer}>
-            <View style={styles.videoPlaceholder}>
-              <IconSymbol 
-                ios_icon_name="videocam" 
-                android_material_icon_name="videocam" 
-                size={48} 
-                color={colors.primary} 
-              />
-              <Text style={styles.videoPlaceholderText}>Video uploaded</Text>
-              <Text style={styles.videoPlaceholderSubtext}>
-                Higher accuracy for body measurements
-              </Text>
-            </View>
-            <View style={styles.mediaTypeLabel}>
-              <IconSymbol 
-                ios_icon_name="videocam" 
-                android_material_icon_name="videocam" 
-                size={16} 
-                color={colors.milkyWay} 
-              />
-              <Text style={styles.mediaTypeLabelText}>Video</Text>
+              <Text style={styles.mediaTypeLabelText}>Photo Uploaded</Text>
             </View>
           </View>
         )}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Step 2: Enter Measurements</Text>
+        <Text style={styles.sectionTitle}>
+          {avatarUri ? 'Update Measurements' : 'Step 2: Enter Measurements'}
+        </Text>
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Height (cm)</Text>
           <TextInput
             style={styles.input}
             placeholder="170"
             keyboardType="numeric"
-            value={bodyScan.height > 0 ? bodyScan.height.toString() : ''}
-            onChangeText={(text) => setBodyScan(prev => ({ ...prev, height: parseFloat(text) || 0 }))}
+            value={height}
+            onChangeText={setHeight}
             placeholderTextColor={colors.textSecondary}
           />
         </View>
@@ -255,63 +205,100 @@ export default function HomeScreen() {
             style={styles.input}
             placeholder="70"
             keyboardType="numeric"
-            value={bodyScan.weight > 0 ? bodyScan.weight.toString() : ''}
-            onChangeText={(text) => setBodyScan(prev => ({ ...prev, weight: parseFloat(text) || 0 }))}
+            value={weight}
+            onChangeText={setWeight}
             placeholderTextColor={colors.textSecondary}
           />
         </View>
       </View>
 
       <TouchableOpacity 
-        style={[styles.analyzeButton, loading && styles.analyzeButtonDisabled]} 
-        onPress={handleAnalyze}
-        disabled={loading}
+        style={[styles.generateButton, isGenerating && styles.generateButtonDisabled]} 
+        onPress={handleGenerateAvatar}
+        disabled={isGenerating}
       >
-        {loading ? (
-          <ActivityIndicator color={colors.milkyWay} />
+        {isGenerating ? (
+          <>
+            <ActivityIndicator color="#fff" />
+            <Text style={styles.generateButtonText}>Processing...</Text>
+          </>
         ) : (
           <>
             <IconSymbol
-              ios_icon_name="auto-awesome"
+              ios_icon_name="sparkles"
               android_material_icon_name="auto-awesome"
               size={20}
-              color={colors.milkyWay}
+              color="#fff"
             />
-            <Text style={styles.analyzeButtonText}>Generate AI Avatar</Text>
+            <Text style={styles.generateButtonText}>
+              {avatarUri ? 'Update AI Avatar' : 'Generate AI Avatar'}
+            </Text>
           </>
         )}
       </TouchableOpacity>
 
       {error && (
         <View style={styles.errorContainer}>
+          <IconSymbol 
+            ios_icon_name="exclamationmark.triangle" 
+            android_material_icon_name="warning" 
+            size={20} 
+            color="#fff" 
+          />
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
 
-      {hasAnalyzed && result && (
-        <View style={styles.resultsSection}>
-          <AvatarPreview
-            imageUri={bodyScan.image || undefined}
-            avatarUrl={result.avatarUrl}
-            measurements={result.measurements}
-            confidence={result.confidence}
-            loading={loading}
-          />
-          {result.avatarUrl && (
-            <View style={styles.successMessage}>
-              <IconSymbol
-                ios_icon_name="check-circle"
-                android_material_icon_name="check-circle"
-                size={24}
-                color={colors.galaxy}
-              />
-              <Text style={styles.successMessageText}>
-                Avatar created! Visit Wishlist or Wardrobe to try on clothes
-              </Text>
-            </View>
-          )}
+      {isGenerating && (
+        <View style={styles.processingInfo}>
+          <Text style={styles.processingTitle}>AI Processing Steps:</Text>
+          <View style={styles.processingStep}>
+            <IconSymbol 
+              ios_icon_name="1.circle.fill" 
+              android_material_icon_name="looks-one" 
+              size={20} 
+              color={colors.primary} 
+            />
+            <Text style={styles.processingStepText}>Removing background from photo</Text>
+          </View>
+          <View style={styles.processingStep}>
+            <IconSymbol 
+              ios_icon_name="2.circle.fill" 
+              android_material_icon_name="looks-two" 
+              size={20} 
+              color={colors.primary} 
+            />
+            <Text style={styles.processingStepText}>Generating AI human replica</Text>
+          </View>
+          <View style={styles.processingStep}>
+            <IconSymbol 
+              ios_icon_name="3.circle.fill" 
+              android_material_icon_name="looks-3" 
+              size={20} 
+              color={colors.primary} 
+            />
+            <Text style={styles.processingStepText}>Creating clean avatar model</Text>
+          </View>
         </View>
       )}
+
+      <View style={styles.infoSection}>
+        <IconSymbol 
+          ios_icon_name="info.circle" 
+          android_material_icon_name="info" 
+          size={24} 
+          color={colors.primary} 
+        />
+        <View style={styles.infoContent}>
+          <Text style={styles.infoTitle}>How it works:</Text>
+          <Text style={styles.infoText}>
+            • AI removes the background from your photo{'\n'}
+            • Creates a clean human replica avatar{'\n'}
+            • Ready for virtual clothing try-on{'\n'}
+            • Visit Wishlist or Wardrobe to try on clothes
+          </Text>
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -323,7 +310,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: 32,
@@ -344,11 +331,11 @@ const styles = StyleSheet.create({
   },
   existingAvatarSection: {
     marginBottom: 32,
+    alignItems: 'center',
   },
   updatePrompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
@@ -374,7 +361,7 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   imageButton: {
     flex: 1,
@@ -385,11 +372,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
     borderRadius: 12,
-    padding: 12,
-    gap: 6,
+    padding: 16,
+    gap: 8,
   },
   imageButtonText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
   },
@@ -397,33 +384,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: colors.meteor,
+    backgroundColor: colors.card,
     position: 'relative',
   },
   previewImage: {
     width: '100%',
     aspectRatio: 3 / 4,
     resizeMode: 'cover',
-  },
-  videoPlaceholder: {
-    width: '100%',
-    aspectRatio: 3 / 4,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  videoPlaceholderText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginTop: 16,
-  },
-  videoPlaceholderSubtext: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
   },
   mediaTypeLabel: {
     position: 'absolute',
@@ -440,7 +407,7 @@ const styles = StyleSheet.create({
   mediaTypeLabelText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.milkyWay,
+    color: '#fff',
   },
   inputContainer: {
     marginBottom: 16,
@@ -460,7 +427,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-  analyzeButton: {
+  generateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -470,45 +437,75 @@ const styles = StyleSheet.create({
     marginVertical: 24,
     gap: 8,
   },
-  analyzeButtonDisabled: {
+  generateButtonDisabled: {
     opacity: 0.6,
   },
-  analyzeButtonText: {
+  generateButtonText: {
     fontSize: 17,
     fontWeight: '700',
-    color: colors.milkyWay,
+    color: '#fff',
   },
   errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.error,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    gap: 12,
   },
   errorText: {
-    color: colors.milkyWay,
+    flex: 1,
+    color: '#fff',
     fontSize: 15,
     fontWeight: '600',
-    textAlign: 'center',
   },
-  resultsSection: {
-    marginTop: 24,
-  },
-  successMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  processingInfo: {
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-    gap: 12,
-    borderWidth: 2,
-    borderColor: colors.galaxy,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
-  successMessageText: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
+  processingTitle: {
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.text,
+    marginBottom: 16,
+  },
+  processingStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  processingStepText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+  },
+  infoSection: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: colors.textSecondary,
     lineHeight: 20,
   },
 });
