@@ -98,7 +98,7 @@ export default function WardrobeScreen() {
   };
 
   const handleRemoveOutfit = (id: string, name: string) => {
-    Alert.alert('Remove Outfit', `Remove "${name}" from wardrobe?`, [
+    Alert.alert('Remove Outfit', `Remove "${name}" from wardrobe`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
@@ -138,7 +138,7 @@ export default function WardrobeScreen() {
             : o
         );
         saveOutfits(updatedOutfits);
-        Alert.alert('Success!', 'Virtual try-on complete! The product is now displayed on your avatar.');
+        Alert.alert('Success', 'Virtual try-on complete! The product is now displayed on your avatar.');
       }
     } catch (error) {
       console.error('Try-on error:', error);
@@ -200,7 +200,7 @@ export default function WardrobeScreen() {
         <View style={styles.outfitsSection}>
           <Text style={styles.sectionTitle}>My Outfits ({outfits.length})</Text>
           {outfits.length === 0 ? (
-            <Text style={styles.emptyText}>No outfits yet. Add your first one!</Text>
+            <Text style={styles.emptyText}>No outfits yet. Add your first one</Text>
           ) : (
             <React.Fragment>
               {outfits.map((outfit) => (
@@ -231,7 +231,7 @@ export default function WardrobeScreen() {
                         size={48} 
                         color={colors.grey} 
                       />
-                      <Text style={styles.placeholderText}>Tap &quot;Try On&quot; to see this on your avatar</Text>
+                      <Text style={styles.placeholderText}>Tap Try On to see this on your avatar</Text>
                     </View>
                   ) : null}
 

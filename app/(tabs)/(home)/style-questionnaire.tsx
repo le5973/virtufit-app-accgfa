@@ -10,199 +10,208 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/IconSymbol';
-import { useAvatarStorage, StyleProfile } from '@/hooks/useAvatarStorage';
 
-const FIT_OPTIONS = [
-  { value: 'tight', label: 'Tight', icon: 'arrow.down.right.and.arrow.up.left' },
-  { value: 'fitted', label: 'Fitted', icon: 'arrow.left.and.right' },
-  { value: 'regular', label: 'Regular', icon: 'square' },
-  { value: 'loose', label: 'Loose', icon: 'arrow.up.left.and.arrow.down.right' },
-  { value: 'oversized', label: 'Oversized', icon: 'square.stack.3d.up' },
-];
+const FIT_OPTIONS = ['Tight', 'Fitted', 'Regular', 'Relaxed', 'Oversized'];
 
 const INSECURITY_OPTIONS = [
-  'Arms', 'Stomach', 'Thighs', 'Hips', 'Chest', 'Shoulders', 'Calves', 'None'
+  'Arms',
+  'Stomach',
+  'Thighs',
+  'Hips',
+  'Chest',
+  'Shoulders',
+  'None',
 ];
 
-const STYLE_OPTIONS = [
-  'Casual', 'Formal', 'Sporty', 'Streetwear', 'Minimalist', 
-  'Bohemian', 'Vintage', 'Preppy', 'Edgy', 'Classic'
+const BRAND_OPTIONS = [
+  'Zara',
+  'H&M',
+  'Nike',
+  'Adidas',
+  'Lululemon',
+  'Gap',
+  'Uniqlo',
+  'ASOS',
+  'Urban Outfitters',
+  'Forever 21',
+  'Other',
 ];
+
+const STYLE_QUESTIONNAIRE_KEY = '@style_questionnaire_completed';
 
 export default function StyleQuestionnaireScreen() {
   const router = useRouter();
-  const { saveStyleProfile } = useAvatarStorage();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [fitPreference, setFitPreference] = useState<string>('');
+  const [step, setStep] = useState(1);
+  const [fitPreference, setFitPreference] = useState('');
   const [insecurities, setInsecurities] = useState<string[]>([]);
-  const [stylePreferences, setStylePreferences] = useState<string[]>([]);
+  const [brands, setBrands] = useState<string[]>([]);
 
   const toggleInsecurity = (item: string) => {
-    if (item === 'None') {
-      setInsecurities(['None']);
+    if (insecurities.includes(item)) {
+      setInsecurities(insecurities.filter((i) => i !== item));
     } else {
-      const filtered = insecurities.filter(i => i !== 'None');
-      if (insecurities.includes(item)) {
-        setInsecurities(filtered.filter(i => i !== item));
-      } else {
-        setInsecurities([...filtered, item]);
-      }
+      setInsecurities([...insecurities, item]);
     }
   };
 
-  const toggleStyle = (item: string) => {
-    if (stylePreferences.includes(item)) {
-      setStylePreferences(stylePreferences.filter(i => i !== item));
+  const toggleBrand = (item: string) => {
+    if (brands.includes(item)) {
+      setBrands(brands.filter((i) => i !== item));
     } else {
-      setStylePreferences([...stylePreferences, item]);
+      setBrands([...brands, item]);
     }
   };
 
   const handleNext = () => {
-    if (currentStep === 1 && !fitPreference) {
-      Alert.alert('Selection Required', 'Please select your fit preference');
+    if (step === 1 && !fitPreference) {
+      Alert.alert('Please select a fit preference');
       return;
     }
-    if (currentStep === 2 && insecurities.length === 0) {
-      Alert.alert('Selection Required', 'Please select at least one option');
+    if (step === 2 && insecurities.length === 0) {
+      Alert.alert('Please select at least one option');
       return;
     }
-    if (currentStep === 3 && stylePreferences.length === 0) {
-      Alert.alert('Selection Required', 'Please select at least one style');
+    if (step === 3 && brands.length === 0) {
+      Alert.alert('Please select at least one brand');
       return;
     }
-
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleComplete();
-    }
+    setStep(step + 1);
   };
 
   const handleComplete = async () => {
-    const profile: StyleProfile = {
-      fitPreference: fitPreference as any,
+    if (brands.length === 0) {
+      Alert.alert('Please select at least one brand');
+      return;
+    }
+
+    const styleProfile = {
+      fitPreference,
       insecurities,
-      stylePreferences,
-      completedAt: new Date(),
+      brands,
+      completedAt: new Date().toISOString(),
     };
-    await saveStyleProfile(profile);
-    Alert.alert('Profile Complete!', 'Your style profile has been saved', [
-      { text: 'OK', onPress: () => router.replace('/(tabs)/(home)') }
-    ]);
+
+    await AsyncStorage.setItem('@style_profile', JSON.stringify(styleProfile));
+    await AsyncStorage.setItem(STYLE_QUESTIONNAIRE_KEY, 'true');
+
+    router.replace('/(tabs)/(home)');
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.stepText}>Step {currentStep} of 3</Text>
-          <Text style={styles.title}>
-            {currentStep === 1 && 'How do you like your clothes to fit?'}
-            {currentStep === 2 && 'Any areas you prefer to minimize?'}
-            {currentStep === 3 && 'What\'s your style?'}
+          <Text style={styles.logo}>Ervenista</Text>
+          <Text style={styles.stepIndicator}>
+            Step {step} of 3
           </Text>
         </View>
 
-        {currentStep === 1 && (
-          <View style={styles.optionsContainer}>
-            <React.Fragment>
+        {step === 1 && (
+          <View style={styles.questionContainer}>
+            <Text style={styles.question}>How do you like your clothes to fit</Text>
+            <View style={styles.optionsContainer}>
               {FIT_OPTIONS.map((option) => (
                 <TouchableOpacity
-                  key={option.value}
+                  key={option}
                   style={[
-                    styles.fitOption,
-                    fitPreference === option.value && styles.selectedOption
+                    styles.optionButton,
+                    fitPreference === option && styles.optionButtonSelected,
                   ]}
-                  onPress={() => setFitPreference(option.value)}
+                  onPress={() => setFitPreference(option)}
                 >
-                  <IconSymbol 
-                    ios_icon_name={option.icon} 
-                    android_material_icon_name="checkroom"
-                    size={32} 
-                    color={fitPreference === option.value ? colors.accent : colors.text} 
-                  />
-                  <Text style={[
-                    styles.optionText,
-                    fitPreference === option.value && styles.selectedText
-                  ]}>
-                    {option.label}
+                  <Text
+                    style={[
+                      styles.optionText,
+                      fitPreference === option && styles.optionTextSelected,
+                    ]}
+                  >
+                    {option}
                   </Text>
                 </TouchableOpacity>
               ))}
-            </React.Fragment>
+            </View>
           </View>
         )}
 
-        {currentStep === 2 && (
-          <View style={styles.optionsContainer}>
-            <React.Fragment>
+        {step === 2 && (
+          <View style={styles.questionContainer}>
+            <Text style={styles.question}>
+              Any areas you prefer to keep covered or feel less confident about
+            </Text>
+            <View style={styles.optionsContainer}>
               {INSECURITY_OPTIONS.map((option) => (
                 <TouchableOpacity
                   key={option}
                   style={[
-                    styles.chipOption,
-                    insecurities.includes(option) && styles.selectedChip
+                    styles.optionButton,
+                    insecurities.includes(option) && styles.optionButtonSelected,
                   ]}
                   onPress={() => toggleInsecurity(option)}
                 >
-                  <Text style={[
-                    styles.chipText,
-                    insecurities.includes(option) && styles.selectedChipText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      insecurities.includes(option) && styles.optionTextSelected,
+                    ]}
+                  >
                     {option}
                   </Text>
+                  {insecurities.includes(option) && (
+                    <IconSymbol name="checkmark" size={16} color="#fff" />
+                  )}
                 </TouchableOpacity>
               ))}
-            </React.Fragment>
+            </View>
           </View>
         )}
 
-        {currentStep === 3 && (
-          <View style={styles.optionsContainer}>
-            <React.Fragment>
-              {STYLE_OPTIONS.map((option) => (
+        {step === 3 && (
+          <View style={styles.questionContainer}>
+            <Text style={styles.question}>
+              What are your favorite brands to shop at
+            </Text>
+            <View style={styles.optionsContainer}>
+              {BRAND_OPTIONS.map((option) => (
                 <TouchableOpacity
                   key={option}
                   style={[
-                    styles.chipOption,
-                    stylePreferences.includes(option) && styles.selectedChip
+                    styles.optionButton,
+                    brands.includes(option) && styles.optionButtonSelected,
                   ]}
-                  onPress={() => toggleStyle(option)}
+                  onPress={() => toggleBrand(option)}
                 >
-                  <Text style={[
-                    styles.chipText,
-                    stylePreferences.includes(option) && styles.selectedChipText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      brands.includes(option) && styles.optionTextSelected,
+                    ]}
+                  >
                     {option}
                   </Text>
+                  {brands.includes(option) && (
+                    <IconSymbol name="checkmark" size={16} color="#fff" />
+                  )}
                 </TouchableOpacity>
               ))}
-            </React.Fragment>
+            </View>
           </View>
         )}
-
-        <View style={styles.buttonContainer}>
-          {currentStep > 1 && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => setCurrentStep(currentStep - 1)}
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleNext}
-          >
-            <Text style={styles.nextButtonText}>
-              {currentStep === 3 ? 'Complete' : 'Next'}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+
+      <View style={styles.footer}>
+        {step < 3 ? (
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <Text style={styles.nextButtonText}>Next</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.nextButton} onPress={handleComplete}>
+            <Text style={styles.nextButtonText}>Complete</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -210,101 +219,74 @@ export default function StyleQuestionnaireScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#fff',
   },
-  content: {
+  scrollContent: {
     padding: 20,
-    paddingBottom: 100,
   },
   header: {
-    marginBottom: 32,
+    alignItems: 'center',
+    marginBottom: 40,
   },
-  stepText: {
-    fontSize: 14,
-    color: colors.accent,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 28,
+  logo: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FF1493',
+    marginBottom: 10,
+  },
+  stepIndicator: {
+    fontSize: 14,
+    color: '#666',
+  },
+  questionContainer: {
+    marginBottom: 20,
+  },
+  question: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 30,
+    textAlign: 'center',
   },
   optionsContainer: {
     gap: 12,
-    marginBottom: 32,
   },
-  fitOption: {
+  optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundAlt,
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selectedOption: {
-    borderColor: colors.accent,
-    backgroundColor: colors.card,
-  },
-  optionText: {
-    fontSize: 18,
-    color: colors.text,
-    marginLeft: 16,
-  },
-  selectedText: {
-    color: colors.accent,
-    fontWeight: 'bold',
-  },
-  chipOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    backgroundColor: colors.backgroundAlt,
-    alignSelf: 'flex-start',
-    marginRight: 8,
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selectedChip: {
-    backgroundColor: colors.card,
-    borderColor: colors.accent,
-  },
-  chipText: {
-    fontSize: 16,
-    color: colors.text,
-  },
-  selectedChipText: {
-    color: colors.accent,
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  backButton: {
-    flex: 1,
-    backgroundColor: colors.backgroundAlt,
+    justifyContent: 'space-between',
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#fff',
   },
-  backButtonText: {
-    color: colors.text,
+  optionButtonSelected: {
+    borderColor: '#FF1493',
+    backgroundColor: '#FF1493',
+  },
+  optionText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#000',
+    fontWeight: '500',
+  },
+  optionTextSelected: {
+    color: '#fff',
+  },
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   nextButton: {
-    flex: 2,
-    backgroundColor: colors.primary,
+    backgroundColor: '#FF1493',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
   nextButtonText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

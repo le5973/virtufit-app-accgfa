@@ -70,7 +70,7 @@ export default function WishlistScreen() {
   const handleDeleteItem = (id: string) => {
     Alert.alert(
       'Delete Item',
-      'Are you sure you want to remove this item from your wishlist?',
+      'Are you sure you want to remove this item from your wishlist',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -134,7 +134,7 @@ export default function WishlistScreen() {
       if (result?.imageUrl) {
         // Update the item with the try-on image
         updateItem(item.id, { tryOnImageUrl: result.imageUrl });
-        Alert.alert('Success!', 'Virtual try-on complete! The product is now displayed on your avatar.');
+        Alert.alert('Success', 'Virtual try-on complete! The product is now displayed on your avatar.');
       }
     } catch (error) {
       console.error('Try-on error:', error);
@@ -313,7 +313,7 @@ export default function WishlistScreen() {
                         size={48} 
                         color={colors.grey} 
                       />
-                      <Text style={styles.placeholderText}>Tap &quot;Try On&quot; to see this on your avatar</Text>
+                      <Text style={styles.placeholderText}>Tap Try On to see this on your avatar</Text>
                     </View>
                   ) : (
                     <View style={styles.noImagePlaceholder}>

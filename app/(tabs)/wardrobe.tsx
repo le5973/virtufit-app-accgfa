@@ -99,7 +99,7 @@ export default function WardrobeScreen() {
   };
 
   const handleRemoveOutfit = (id: string, name: string) => {
-    Alert.alert('Remove Outfit', `Remove "${name}" from wardrobe?`, [
+    Alert.alert('Remove Outfit', `Remove "${name}" from wardrobe`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
@@ -139,7 +139,7 @@ export default function WardrobeScreen() {
             : o
         );
         saveOutfits(updatedOutfits);
-        Alert.alert('Success!', 'Virtual try-on complete! The product is now displayed on your avatar.');
+        Alert.alert('Success', 'Virtual try-on complete! The product is now displayed on your avatar.');
       }
     } catch (error) {
       console.error('Try-on error:', error);
@@ -217,7 +217,7 @@ export default function WardrobeScreen() {
             <View style={styles.emptyState}>
               <IconSymbol android_material_icon_name="checkroom" size={64} color={colors.textLight} />
               <Text style={styles.emptyText}>No outfits yet</Text>
-              <Text style={styles.emptySubtext}>Add your first outfit to get started!</Text>
+              <Text style={styles.emptySubtext}>Add your first outfit to get started</Text>
             </View>
           ) : (
             <React.Fragment>
@@ -247,7 +247,7 @@ export default function WardrobeScreen() {
                         size={48} 
                         color={colors.textLight} 
                       />
-                      <Text style={styles.placeholderText}>Tap &quot;Try On&quot; to see this on your avatar</Text>
+                      <Text style={styles.placeholderText}>Tap Try On to see this on your avatar</Text>
                     </View>
                   ) : null}
 
