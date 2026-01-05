@@ -54,6 +54,19 @@ export const useWishlist = () => {
     }
   };
 
+  const updateItem = async (id: string, updates: Partial<WishlistItem>) => {
+    try {
+      const updated = items.map(item =>
+        item.id === id ? { ...item, ...updates } : item
+      );
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      setItems(updated);
+    } catch (error) {
+      console.log('Error updating item:', error);
+      throw error;
+    }
+  };
+
   const togglePublic = async (id: string) => {
     try {
       const updated = items.map(item =>
@@ -74,6 +87,7 @@ export const useWishlist = () => {
     loading, 
     addItem, 
     removeItem, 
+    updateItem,
     togglePublic,
     getPublicItems,
     refreshWishlist: loadWishlist 

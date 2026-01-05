@@ -12,38 +12,22 @@ import {
   Linking,
   Share,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { WishlistItem } from '@/types/bodyMeasurements';
+import { useWishlist } from '@/hooks/useWishlist';
+import { useAvatarStorage } from '@/hooks/useAvatarStorage';
+import { useVirtualTryOn } from '@/hooks/useVirtualTryOn';
 
 export default function WishlistScreen() {
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([
-    {
-      id: '1',
-      name: 'Designer Handbag',
-      imageUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400',
-      websiteUrl: 'https://example.com',
-      websiteName: 'Luxury Store',
-      price: '$299.99',
-      dateAdded: new Date().toISOString(),
-      notes: 'Birthday wishlist item',
-      isPublic: true,
-    },
-    {
-      id: '2',
-      name: 'Running Shoes',
-      imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
-      websiteUrl: 'https://example.com',
-      websiteName: 'Sports Shop',
-      price: '$129.99',
-      dateAdded: new Date().toISOString(),
-      notes: 'For marathon training',
-      isPublic: false,
-    },
-  ]);
+  const { items, addItem, removeItem, togglePublic, updateItem } = useWishlist();
+  const { avatar } = useAvatarStorage();
+  const { tryOnClothing, isProcessing } = useVirtualTryOn();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [processingItemId, setProcessingItemId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
     name: '',
     imageUrl: '',
@@ -55,24 +39,21 @@ export default function WishlistScreen() {
   });
 
   const handleAddItem = () => {
-    if (!newItem.name || !newItem.imageUrl || !newItem.websiteUrl) {
-      Alert.alert('Missing Information', 'Please fill in at least name, image URL, and website URL');
+    if (!newItem.name || !newItem.websiteUrl) {
+      Alert.alert('Missing Information', 'Please fill in at least name and website URL');
       return;
     }
 
-    const item: WishlistItem = {
-      id: Date.now().toString(),
+    addItem({
       name: newItem.name,
       imageUrl: newItem.imageUrl,
       websiteUrl: newItem.websiteUrl,
-      websiteName: newItem.websiteName || 'Unknown Store',
+      websiteName: newItem.websiteName || new URL(newItem.websiteUrl).hostname,
       price: newItem.price,
-      dateAdded: new Date().toISOString(),
       notes: newItem.notes,
       isPublic: newItem.isPublic,
-    };
+    });
 
-    setWishlistItems([item, ...wishlistItems]);
     setNewItem({
       name: '',
       imageUrl: '',
@@ -95,18 +76,14 @@ export default function WishlistScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => setWishlistItems(wishlistItems.filter(i => i.id !== id)),
+          onPress: () => removeItem(id),
         },
       ]
     );
   };
 
   const handleTogglePublic = (id: string) => {
-    setWishlistItems(
-      wishlistItems.map(item =>
-        item.id === id ? { ...item, isPublic: !item.isPublic } : item
-      )
-    );
+    togglePublic(id);
   };
 
   const handleOpenWebsite = (url: string) => {
@@ -116,7 +93,7 @@ export default function WishlistScreen() {
   };
 
   const handleShareWishlist = async () => {
-    const publicItems = wishlistItems.filter(item => item.isPublic);
+    const publicItems = items.filter(item => item.isPublic);
     if (publicItems.length === 0) {
       Alert.alert('No Public Items', 'Make some items public to share your wishlist');
       return;
@@ -136,7 +113,38 @@ export default function WishlistScreen() {
     }
   };
 
-  const publicCount = wishlistItems.filter(item => item.isPublic).length;
+  const handleTryOnItem = async (item: WishlistItem) => {
+    if (!avatar?.imageUri) {
+      Alert.alert('No Avatar', 'Please create your AI avatar first to use virtual try-on');
+      return;
+    }
+
+    setProcessingItemId(item.id);
+    
+    try {
+      // TODO: Backend Integration - Call the /api/virtual-tryon endpoint
+      // This endpoint will:
+      // 1. Accept the avatar image URI and clothing product URL
+      // 2. Use GPT-5.2 vision to analyze the clothing item from the URL
+      // 3. Generate a realistic overlay of the clothing on the avatar
+      // 4. Return the composite image URL showing the product on your avatar
+      
+      const result = await tryOnClothing(avatar.imageUri, item.websiteUrl);
+      
+      if (result?.imageUrl) {
+        // Update the item with the try-on image
+        updateItem(item.id, { tryOnImageUrl: result.imageUrl });
+        Alert.alert('Success!', 'Virtual try-on complete! The product is now displayed on your avatar.');
+      }
+    } catch (error) {
+      console.error('Try-on error:', error);
+      Alert.alert('Error', 'Failed to generate virtual try-on. Please try again.');
+    } finally {
+      setProcessingItemId(null);
+    }
+  };
+
+  const publicCount = items.filter(item => item.isPublic).length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -157,6 +165,20 @@ export default function WishlistScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {!avatar && (
+        <View style={styles.noAvatarBanner}>
+          <IconSymbol
+            ios_icon_name="info.circle"
+            android_material_icon_name="info"
+            size={20}
+            color={colors.primary}
+          />
+          <Text style={styles.noAvatarText}>
+            Create your AI avatar to see products on your virtual model
+          </Text>
+        </View>
+      )}
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
         <TouchableOpacity
@@ -184,7 +206,7 @@ export default function WishlistScreen() {
             />
             <TextInput
               style={styles.input}
-              placeholder="Image URL"
+              placeholder="Image URL (optional)"
               value={newItem.imageUrl}
               onChangeText={(text) => setNewItem({ ...newItem, imageUrl: text })}
               placeholderTextColor={colors.textSecondary}
@@ -245,11 +267,11 @@ export default function WishlistScreen() {
           </View>
         )}
 
-        {wishlistItems.length === 0 ? (
+        {items.length === 0 ? (
           <View style={styles.emptyState}>
             <IconSymbol
               ios_icon_name="favorite-border"
-              android_material_icon_name="favorite-border"
+              android_material_icon_name="favorite_border"
               size={64}
               color={colors.textSecondary}
             />
@@ -260,10 +282,50 @@ export default function WishlistScreen() {
           </View>
         ) : (
           <View style={styles.itemsGrid}>
-            {wishlistItems.map((item) => (
+            {items.map((item) => (
               <React.Fragment key={item.id}>
                 <View style={styles.itemCard}>
-                  <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+                  {/* Try-On Image Display */}
+                  {item.tryOnImageUrl ? (
+                    <View style={styles.tryOnImageContainer}>
+                      <Image 
+                        source={{ uri: item.tryOnImageUrl }} 
+                        style={styles.tryOnImage}
+                        resizeMode="contain"
+                      />
+                      <View style={styles.tryOnBadge}>
+                        <IconSymbol 
+                          ios_icon_name="checkmark.circle.fill"
+                          android_material_icon_name="check_circle" 
+                          size={16} 
+                          color="#FFFFFF" 
+                        />
+                        <Text style={styles.tryOnBadgeText}>On Avatar</Text>
+                      </View>
+                    </View>
+                  ) : item.imageUrl ? (
+                    <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+                  ) : avatar ? (
+                    <View style={styles.placeholderContainer}>
+                      <IconSymbol 
+                        ios_icon_name="sparkles"
+                        android_material_icon_name="auto_awesome" 
+                        size={48} 
+                        color={colors.grey} 
+                      />
+                      <Text style={styles.placeholderText}>Tap &quot;Try On&quot; to see this on your avatar</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.noImagePlaceholder}>
+                      <IconSymbol
+                        ios_icon_name="photo"
+                        android_material_icon_name="image"
+                        size={48}
+                        color={colors.grey}
+                      />
+                    </View>
+                  )}
+
                   <View style={styles.itemInfo}>
                     <View style={styles.itemHeader}>
                       <Text style={styles.itemName}>{item.name}</Text>
@@ -289,13 +351,44 @@ export default function WishlistScreen() {
                         />
                         <Text style={styles.actionButtonText}>View</Text>
                       </TouchableOpacity>
+
+                      {avatar && (
+                        <TouchableOpacity
+                          style={[
+                            styles.tryOnButton,
+                            (isProcessing && processingItemId === item.id) && styles.buttonDisabled
+                          ]}
+                          onPress={() => handleTryOnItem(item)}
+                          disabled={isProcessing && processingItemId === item.id}
+                        >
+                          {isProcessing && processingItemId === item.id ? (
+                            <>
+                              <ActivityIndicator size="small" color={colors.primary} />
+                              <Text style={styles.tryOnButtonText}>Processing...</Text>
+                            </>
+                          ) : (
+                            <>
+                              <IconSymbol
+                                ios_icon_name="sparkles"
+                                android_material_icon_name="auto_awesome"
+                                size={20}
+                                color={colors.primary}
+                              />
+                              <Text style={styles.tryOnButtonText}>
+                                {item.tryOnImageUrl ? 'Refresh' : 'Try On'}
+                              </Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      )}
+
                       <TouchableOpacity
                         style={styles.actionButton}
                         onPress={() => handleTogglePublic(item.id)}
                       >
                         <IconSymbol
-                          ios_icon_name={item.isPublic ? 'lock-open' : 'lock'}
-                          android_material_icon_name={item.isPublic ? 'lock-open' : 'lock'}
+                          ios_icon_name={item.isPublic ? 'lock.open' : 'lock'}
+                          android_material_icon_name={item.isPublic ? 'lock_open' : 'lock'}
                           size={20}
                           color={colors.primary}
                         />
@@ -308,7 +401,7 @@ export default function WishlistScreen() {
                         onPress={() => handleDeleteItem(item.id)}
                       >
                         <IconSymbol
-                          ios_icon_name="delete"
+                          ios_icon_name="trash"
                           android_material_icon_name="delete"
                           size={20}
                           color={colors.error}
@@ -362,6 +455,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
+  },
+  noAvatarBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    gap: 12,
+  },
+  noAvatarText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    lineHeight: 18,
   },
   scrollView: {
     flex: 1,
@@ -479,10 +591,62 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  tryOnImageContainer: {
+    width: '100%',
+    height: 300,
+    backgroundColor: colors.background,
+    position: 'relative',
+  },
+  tryOnImage: {
+    width: '100%',
+    height: '100%',
+  },
+  tryOnBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 4,
+  },
+  tryOnBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: 200,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    padding: 20,
+  },
+  placeholderText: {
+    marginTop: 12,
+    fontSize: 13,
+    color: colors.grey,
+    textAlign: 'center',
+  },
   itemImage: {
     width: '100%',
     height: 200,
     backgroundColor: colors.border,
+  },
+  noImagePlaceholder: {
+    width: '100%',
+    height: 200,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   itemInfo: {
     padding: 16,
@@ -530,6 +694,7 @@ const styles = StyleSheet.create({
   },
   itemActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   actionButton: {
@@ -547,5 +712,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     color: colors.text,
+  },
+  tryOnButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: colors.background,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  tryOnButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });
