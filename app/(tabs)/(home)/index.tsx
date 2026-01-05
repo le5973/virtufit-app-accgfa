@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors, commonStyles, shadows } from "@/styles/commonStyles";
@@ -8,6 +8,8 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AvatarDisplay } from "@/components/AvatarDisplay";
+import { useAvatarStorage } from "@/hooks/useAvatarStorage";
 
 const features = [
   {
@@ -50,6 +52,14 @@ const features = [
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const { avatar, styleProfile } = useAvatarStorage();
+
+  useEffect(() => {
+    // If avatar exists but no style profile, redirect to questionnaire
+    if (avatar && !styleProfile) {
+      router.push('/(tabs)/(home)/style-questionnaire');
+    }
+  }, [avatar, styleProfile]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -64,6 +74,57 @@ export default function HomeScreen() {
             Welcome to the future of online shopping
           </Text>
         </View>
+
+        {/* AI Avatar Section */}
+        {avatar ? (
+          <View style={[styles.avatarSection, shadows.medium]}>
+            <View style={styles.avatarHeader}>
+              <IconSymbol
+                android_material_icon_name="waving_hand"
+                size={28}
+                color={colors.secondary}
+              />
+              <Text style={styles.greetingText}>Hello! Meet your AI Avatar</Text>
+            </View>
+            <View style={styles.avatarDisplayContainer}>
+              <AvatarDisplay size="large" showMeasurements />
+            </View>
+            <TouchableOpacity
+              style={styles.updateAvatarButton}
+              onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
+            >
+              <IconSymbol
+                android_material_icon_name="edit"
+                size={20}
+                color={colors.primary}
+              />
+              <Text style={styles.updateAvatarText}>Update Avatar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={[styles.createAvatarBanner, shadows.medium]}>
+            <IconSymbol
+              android_material_icon_name="auto_awesome"
+              size={48}
+              color={colors.secondary}
+            />
+            <Text style={styles.bannerTitle}>Create Your AI Avatar</Text>
+            <Text style={styles.bannerSubtitle}>
+              Get started with personalized virtual try-ons and size recommendations
+            </Text>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
+            >
+              <IconSymbol
+                android_material_icon_name="add_circle"
+                size={24}
+                color="#FFFFFF"
+              />
+              <Text style={styles.createButtonText}>Create Avatar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Features Grid */}
         <View style={styles.featuresContainer}>
@@ -143,6 +204,84 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 20,
   },
+  avatarSection: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  avatarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  greetingText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  avatarDisplayContainer: {
+    marginBottom: 20,
+  },
+  updateAvatarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  updateAvatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  createAvatarBanner: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 32,
+    marginBottom: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.secondary,
+  },
+  bannerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  bannerSubtitle: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.secondary,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    ...shadows.medium,
+  },
+  createButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   featuresContainer: {
     marginBottom: 24,
   },
@@ -196,7 +335,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.primary,
+    color: colors.secondary,
     marginBottom: 4,
   },
   statLabel: {

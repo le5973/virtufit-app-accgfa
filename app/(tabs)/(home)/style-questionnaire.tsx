@@ -108,73 +108,79 @@ export default function StyleQuestionnaireScreen() {
 
         {currentStep === 1 && (
           <View style={styles.optionsContainer}>
-            {FIT_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.fitOption,
-                  fitPreference === option.value && styles.selectedOption
-                ]}
-                onPress={() => setFitPreference(option.value)}
-              >
-                <IconSymbol 
-                  ios_icon_name={option.icon} 
-                  android_material_icon_name="checkroom"
-                  size={32} 
-                  color={fitPreference === option.value ? colors.accent : colors.text} 
-                />
-                <Text style={[
-                  styles.optionText,
-                  fitPreference === option.value && styles.selectedText
-                ]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <React.Fragment>
+              {FIT_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.fitOption,
+                    fitPreference === option.value && styles.selectedOption
+                  ]}
+                  onPress={() => setFitPreference(option.value)}
+                >
+                  <IconSymbol 
+                    ios_icon_name={option.icon} 
+                    android_material_icon_name="checkroom"
+                    size={32} 
+                    color={fitPreference === option.value ? colors.accent : colors.text} 
+                  />
+                  <Text style={[
+                    styles.optionText,
+                    fitPreference === option.value && styles.selectedText
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </React.Fragment>
           </View>
         )}
 
         {currentStep === 2 && (
           <View style={styles.optionsContainer}>
-            {INSECURITY_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.chipOption,
-                  insecurities.includes(option) && styles.selectedChip
-                ]}
-                onPress={() => toggleInsecurity(option)}
-              >
-                <Text style={[
-                  styles.chipText,
-                  insecurities.includes(option) && styles.selectedChipText
-                ]}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <React.Fragment>
+              {INSECURITY_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.chipOption,
+                    insecurities.includes(option) && styles.selectedChip
+                  ]}
+                  onPress={() => toggleInsecurity(option)}
+                >
+                  <Text style={[
+                    styles.chipText,
+                    insecurities.includes(option) && styles.selectedChipText
+                  ]}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </React.Fragment>
           </View>
         )}
 
         {currentStep === 3 && (
           <View style={styles.optionsContainer}>
-            {STYLE_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.chipOption,
-                  stylePreferences.includes(option) && styles.selectedChip
-                ]}
-                onPress={() => toggleStyle(option)}
-              >
-                <Text style={[
-                  styles.chipText,
-                  stylePreferences.includes(option) && styles.selectedChipText
-                ]}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <React.Fragment>
+              {STYLE_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.chipOption,
+                    stylePreferences.includes(option) && styles.selectedChip
+                  ]}
+                  onPress={() => toggleStyle(option)}
+                >
+                  <Text style={[
+                    styles.chipText,
+                    stylePreferences.includes(option) && styles.selectedChipText
+                  ]}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </React.Fragment>
           </View>
         )}
 

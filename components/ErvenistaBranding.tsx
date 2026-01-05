@@ -26,16 +26,13 @@ export function ErvenistaBranding({
   if (variant === 'gradient') {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={[colors.primary, colors.secondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientContainer}
+        <View
+          style={[styles.gradientContainer, { backgroundColor: colors.secondary }]}
         >
           <Text style={[styles.logoText, { fontSize: currentSize.fontSize }]}>
             Ervenista
           </Text>
-        </LinearGradient>
+        </View>
         {showTagline && (
           <Text style={[styles.tagline, { fontSize: currentSize.taglineSize }]}>
             Your Perfect Fit, Virtually
@@ -57,7 +54,7 @@ export function ErvenistaBranding({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.logoText, { fontSize: currentSize.fontSize, color: colors.primary }]}>
+      <Text style={[styles.logoText, { fontSize: currentSize.fontSize, color: colors.secondary }]}>
         Ervenista
       </Text>
       {showTagline && (
@@ -81,7 +78,7 @@ const styles = StyleSheet.create({
   },
   logoTextMinimal: {
     fontWeight: '900',
-    color: colors.primary,
+    color: colors.secondary,
     letterSpacing: -2,
   },
   gradientContainer: {

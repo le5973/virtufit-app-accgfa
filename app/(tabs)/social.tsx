@@ -213,7 +213,9 @@ export default function SocialScreen() {
                 <Text style={styles.emptySubtext}>Search for users to add friends</Text>
               </View>
             ) : (
-              friends.map(renderFriendCard)
+              <React.Fragment>
+                {friends.map(renderFriendCard)}
+              </React.Fragment>
             )}
           </View>
         )}
@@ -226,7 +228,9 @@ export default function SocialScreen() {
                 <Text style={styles.emptyText}>No pending requests</Text>
               </View>
             ) : (
-              friendRequests.map(renderRequestCard)
+              <React.Fragment>
+                {friendRequests.map(renderRequestCard)}
+              </React.Fragment>
             )}
           </View>
         )}
@@ -256,7 +260,9 @@ export default function SocialScreen() {
                 <Text style={styles.emptySubtext}>Enter a username or email to find users</Text>
               </View>
             ) : (
-              searchResults.map(renderSearchResult)
+              <React.Fragment>
+                {searchResults.map(renderSearchResult)}
+              </React.Fragment>
             )}
           </View>
         )}

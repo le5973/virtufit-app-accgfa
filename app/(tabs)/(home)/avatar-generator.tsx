@@ -111,17 +111,14 @@ export default function AvatarGeneratorScreen() {
             {faceImage ? (
               <Image source={{ uri: faceImage }} style={styles.image} />
             ) : (
-              <LinearGradient
-                colors={[colors.primary, colors.primaryDark]}
-                style={styles.imagePlaceholder}
-              >
+              <View style={[styles.imagePlaceholder, { backgroundColor: colors.secondary }]}>
                 <IconSymbol 
                   android_material_icon_name="account_circle" 
                   size={80} 
                   color="#FFFFFF" 
                 />
                 <Text style={styles.imageButtonText}>Upload Face Photo</Text>
-              </LinearGradient>
+              </View>
             )}
           </TouchableOpacity>
 
@@ -177,11 +174,11 @@ export default function AvatarGeneratorScreen() {
 
           <View style={styles.inputRow}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Chest (cm)</Text>
+              <Text style={styles.label}>Chest (inches)</Text>
               <TextInput
                 style={commonStyles.input}
                 keyboardType="numeric"
-                placeholder="95"
+                placeholder="37"
                 placeholderTextColor={colors.textSecondary}
                 value={measurements.chest > 0 ? measurements.chest.toString() : ''}
                 onChangeText={(text) => setMeasurements({ ...measurements, chest: parseFloat(text) || 0 })}
@@ -189,11 +186,11 @@ export default function AvatarGeneratorScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Waist (cm)</Text>
+              <Text style={styles.label}>Waist (inches)</Text>
               <TextInput
                 style={commonStyles.input}
                 keyboardType="numeric"
-                placeholder="80"
+                placeholder="31"
                 placeholderTextColor={colors.textSecondary}
                 value={measurements.waist > 0 ? measurements.waist.toString() : ''}
                 onChangeText={(text) => setMeasurements({ ...measurements, waist: parseFloat(text) || 0 })}
@@ -203,11 +200,11 @@ export default function AvatarGeneratorScreen() {
 
           <View style={styles.inputRow}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Hips (cm)</Text>
+              <Text style={styles.label}>Hips (inches)</Text>
               <TextInput
                 style={commonStyles.input}
                 keyboardType="numeric"
-                placeholder="100"
+                placeholder="39"
                 placeholderTextColor={colors.textSecondary}
                 value={measurements.hips > 0 ? measurements.hips.toString() : ''}
                 onChangeText={(text) => setMeasurements({ ...measurements, hips: parseFloat(text) || 0 })}
@@ -215,11 +212,11 @@ export default function AvatarGeneratorScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Inseam (cm)</Text>
+              <Text style={styles.label}>Inseam (inches)</Text>
               <TextInput
                 style={commonStyles.input}
                 keyboardType="numeric"
-                placeholder="75"
+                placeholder="30"
                 placeholderTextColor={colors.textSecondary}
                 value={measurements.inseam > 0 ? measurements.inseam.toString() : ''}
                 onChangeText={(text) => setMeasurements({ ...measurements, inseam: parseFloat(text) || 0 })}
@@ -297,7 +294,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 3,
-    borderColor: colors.primary,
+    borderColor: colors.secondary,
   },
   image: {
     width: '100%',

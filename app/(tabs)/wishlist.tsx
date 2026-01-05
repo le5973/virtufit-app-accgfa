@@ -261,7 +261,9 @@ export default function WishlistScreen() {
                 <Text style={styles.countText}>{items.length}</Text>
               </View>
             </View>
-            {items.map(renderWishlistItem)}
+            <React.Fragment>
+              {items.map(renderWishlistItem)}
+            </React.Fragment>
           </View>
         )}
 

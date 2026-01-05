@@ -18,6 +18,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 type TabType = 'profile' | 'features' | 'settings';
 
+const FEATURES_DATA = [
+  { title: 'AI Avatar Generation', icon: 'person', enabled: true },
+  { title: 'Virtual Try-On', icon: 'checkroom', enabled: true },
+  { title: 'Size Recommendations', icon: 'straighten', enabled: true },
+  { title: 'Social Sharing', icon: 'share', enabled: true },
+];
+
+const SETTINGS_DATA = [
+  { title: 'Account Settings', icon: 'settings' },
+  { title: 'Privacy & Security', icon: 'lock' },
+  { title: 'Notifications', icon: 'notifications' },
+  { title: 'Help & Support', icon: 'help' },
+  { title: 'About Ervenista', icon: 'info' },
+];
+
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
 
@@ -36,7 +51,7 @@ export default function ProfileScreen() {
     <View style={styles.tabContent}>
       <View style={[styles.profileHeader, shadows.medium]}>
         <LinearGradient
-          colors={[colors.primary, colors.primaryDark]}
+          colors={[colors.secondary, colors.primary]}
           style={styles.avatarGradient}
         >
           <IconSymbol android_material_icon_name="person" size={48} color="#FFFFFF" />
@@ -73,43 +88,36 @@ export default function ProfileScreen() {
   const renderFeaturesTab = () => (
     <View style={styles.tabContent}>
       <Text style={commonStyles.heading}>Premium Features</Text>
-      {[
-        { title: 'AI Avatar Generation', icon: 'person', enabled: true },
-        { title: 'Virtual Try-On', icon: 'checkroom', enabled: true },
-        { title: 'Size Recommendations', icon: 'straighten', enabled: true },
-        { title: 'Social Sharing', icon: 'share', enabled: true },
-      ].map((feature, index) => (
-        <View key={index} style={[styles.featureItem, shadows.small]}>
-          <View style={[styles.featureIcon, { backgroundColor: colors.primaryLight }]}>
-            <IconSymbol android_material_icon_name={feature.icon as any} size={24} color="#FFFFFF" />
+      <React.Fragment>
+        {FEATURES_DATA.map((feature, index) => (
+          <View key={index} style={[styles.featureItem, shadows.small]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.primaryLight }]}>
+              <IconSymbol android_material_icon_name={feature.icon as any} size={24} color="#FFFFFF" />
+            </View>
+            <Text style={styles.featureText}>{feature.title}</Text>
+            <IconSymbol 
+              android_material_icon_name={feature.enabled ? "check_circle" : "cancel"} 
+              size={24} 
+              color={feature.enabled ? colors.success : colors.textLight} 
+            />
           </View>
-          <Text style={styles.featureText}>{feature.title}</Text>
-          <IconSymbol 
-            android_material_icon_name={feature.enabled ? "check_circle" : "cancel"} 
-            size={24} 
-            color={feature.enabled ? colors.success : colors.textLight} 
-          />
-        </View>
-      ))}
+        ))}
+      </React.Fragment>
     </View>
   );
 
   const renderSettingsTab = () => (
     <View style={styles.tabContent}>
       <Text style={commonStyles.heading}>Settings</Text>
-      {[
-        { title: 'Account Settings', icon: 'settings' },
-        { title: 'Privacy & Security', icon: 'lock' },
-        { title: 'Notifications', icon: 'notifications' },
-        { title: 'Help & Support', icon: 'help' },
-        { title: 'About Ervenista', icon: 'info' },
-      ].map((item, index) => (
-        <TouchableOpacity key={index} style={[styles.settingItem, shadows.small]}>
-          <IconSymbol android_material_icon_name={item.icon as any} size={24} color={colors.primary} />
-          <Text style={styles.settingText}>{item.title}</Text>
-          <IconSymbol android_material_icon_name="chevron_right" size={24} color={colors.textLight} />
-        </TouchableOpacity>
-      ))}
+      <React.Fragment>
+        {SETTINGS_DATA.map((item, index) => (
+          <TouchableOpacity key={index} style={[styles.settingItem, shadows.small]}>
+            <IconSymbol android_material_icon_name={item.icon as any} size={24} color={colors.primary} />
+            <Text style={styles.settingText}>{item.title}</Text>
+            <IconSymbol android_material_icon_name="chevron_right" size={24} color={colors.textLight} />
+          </TouchableOpacity>
+        ))}
+      </React.Fragment>
     </View>
   );
 
@@ -252,7 +260,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.primary,
+    color: colors.secondary,
     marginBottom: 4,
   },
   statLabel: {
