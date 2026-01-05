@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -22,18 +22,14 @@ import { useAvatarGeneration } from '@/hooks/useAvatarGeneration';
 
 export default function AvatarGeneratorScreen() {
   const router = useRouter();
-  const { avatarUri, isGenerating, generateAvatar, loadAvatar } = useAvatarGeneration();
+  const { avatarUri, isGenerating, generateAvatar } = useAvatarGeneration();
   
   const [faceImageUri, setFaceImageUri] = useState<string | null>(null);
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
-  const [chest, setChest] = useState('');
+  const [bust, setBust] = useState('');
   const [waist, setWaist] = useState('');
-  const [hips, setHips] = useState('');
-
-  useEffect(() => {
-    loadAvatar();
-  }, []);
+  const [hip, setHip] = useState('');
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -78,18 +74,18 @@ export default function AvatarGeneratorScreen() {
     }
 
     const measurements = {
-      height: parseFloat(height),
-      weight: parseFloat(weight),
-      chest: chest ? parseFloat(chest) : undefined,
-      waist: waist ? parseFloat(waist) : undefined,
-      hips: hips ? parseFloat(hips) : undefined,
+      height,
+      weight,
+      bust,
+      waist,
+      hip,
     };
 
     const result = await generateAvatar(faceImageUri, measurements);
     
     if (result) {
-      Alert.alert('Success!', 'Your AI avatar has been generated', [
-        { text: 'OK', onPress: () => router.back() }
+      Alert.alert('Success!', 'Your AI avatar has been generated. Complete your style profile next!', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)/(home)/style-questionnaire') }
       ]);
     } else {
       Alert.alert('Error', 'Failed to generate avatar. Please try again.');
@@ -108,7 +104,7 @@ export default function AvatarGeneratorScreen() {
         >
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <IconSymbol name="chevron.left" size={24} color={colors.text} />
+              <IconSymbol ios_icon_name="chevron.left" android_material_icon_name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
             <Text style={commonStyles.title}>Create Your AI Avatar</Text>
             <Text style={commonStyles.text}>
@@ -120,17 +116,17 @@ export default function AvatarGeneratorScreen() {
           <View style={[commonStyles.card, styles.section]}>
             <Text style={styles.sectionTitle}>📸 Face Photo</Text>
             <Text style={styles.sectionSubtitle}>
-              Only your face is needed - we'll build the body!
+              Only your face is needed - we&apos;ll build the body!
             </Text>
             
             <View style={styles.imageButtons}>
               <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-                <IconSymbol name="photo.fill" size={32} color={colors.accent} />
+                <IconSymbol ios_icon_name="photo.fill" android_material_icon_name="photo" size={32} color={colors.accent} />
                 <Text style={styles.imageButtonText}>Gallery</Text>
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
-                <IconSymbol name="camera.fill" size={32} color={colors.accentPink} />
+                <IconSymbol ios_icon_name="camera.fill" android_material_icon_name="camera" size={32} color={colors.accentPink} />
                 <Text style={styles.imageButtonText}>Camera</Text>
               </TouchableOpacity>
             </View>
@@ -181,11 +177,11 @@ export default function AvatarGeneratorScreen() {
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Chest (cm)</Text>
+              <Text style={styles.inputLabel}>Bust (cm)</Text>
               <TextInput
                 style={commonStyles.input}
-                value={chest}
-                onChangeText={setChest}
+                value={bust}
+                onChangeText={setBust}
                 placeholder="e.g., 95"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="numeric"
@@ -205,11 +201,11 @@ export default function AvatarGeneratorScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Hips (cm)</Text>
+              <Text style={styles.inputLabel}>Hip (cm)</Text>
               <TextInput
                 style={commonStyles.input}
-                value={hips}
-                onChangeText={setHips}
+                value={hip}
+                onChangeText={setHip}
                 placeholder="e.g., 95"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="numeric"
@@ -227,7 +223,7 @@ export default function AvatarGeneratorScreen() {
               <ActivityIndicator color={colors.primary} />
             ) : (
               <>
-                <IconSymbol name="sparkles" size={24} color={colors.primary} />
+                <IconSymbol ios_icon_name="sparkles" android_material_icon_name="star" size={24} color={colors.primary} />
                 <Text style={styles.generateButtonText}>Generate AI Avatar</Text>
               </>
             )}
