@@ -35,14 +35,14 @@ interface FloatingTabBarProps {
   tabs: TabBarItem[];
   containerWidth?: number;
   borderRadius?: number;
-  topMargin?: number;
+  bottomMargin?: number;
 }
 
 export default function FloatingTabBar({
   tabs,
   containerWidth = screenWidth / 2.5,
   borderRadius = 35,
-  topMargin
+  bottomMargin
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -58,11 +58,14 @@ export default function FloatingTabBar({
 
       if (pathname === tab.route) {
         score = 100;
-      } else if (pathname.startsWith(tab.route as string)) {
+      }
+      else if (pathname.startsWith(tab.route as string)) {
         score = 80;
-      } else if (pathname.includes(tab.name)) {
+      }
+      else if (pathname.includes(tab.name)) {
         score = 60;
-      } else if (tab.route.includes('/(tabs)/') && pathname.includes(tab.route.split('/(tabs)/')[1])) {
+      }
+      else if (tab.route.includes('/(tabs)/') && pathname.includes(tab.route.split('/(tabs)/')[1])) {
         score = 40;
       }
 
@@ -110,22 +113,16 @@ export default function FloatingTabBar({
     blurContainer: {
       ...styles.blurContainer,
       borderWidth: 1.2,
-      borderColor: 'rgba(255, 255, 255, 1)',
+      borderColor: 'rgba(147, 51, 234, 0.5)',
       ...Platform.select({
         ios: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.8)'
-            : 'rgba(255, 255, 255, 0.6)',
+          backgroundColor: 'rgba(147, 51, 234, 0.7)',
         },
         android: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.95)'
-            : 'rgba(255, 255, 255, 0.6)',
+          backgroundColor: 'rgba(147, 51, 234, 0.85)',
         },
         web: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.95)'
-            : 'rgba(255, 255, 255, 0.6)',
+          backgroundColor: 'rgba(147, 51, 234, 0.85)',
           backdropFilter: 'blur(10px)',
         },
       }),
@@ -135,20 +132,18 @@ export default function FloatingTabBar({
     },
     indicator: {
       ...styles.indicator,
-      backgroundColor: theme.dark
-        ? 'rgba(255, 255, 255, 0.08)'
-        : 'rgba(0, 0, 0, 0.04)',
+      backgroundColor: 'rgba(168, 85, 247, 0.4)',
       width: `${tabWidthPercent}%` as `${number}%`,
     },
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <View style={[
         styles.container,
         {
           width: containerWidth,
-          marginTop: topMargin ?? 10
+          marginBottom: bottomMargin ?? 20
         }
       ]}>
         <BlurView
@@ -164,22 +159,23 @@ export default function FloatingTabBar({
               return (
                 <React.Fragment key={index}>
                 <TouchableOpacity
+                  key={index}
                   style={styles.tab}
                   onPress={() => handleTabPress(tab.route)}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.tabContent}>
+                  <View key={index} style={styles.tabContent}>
                     <IconSymbol
                       android_material_icon_name={tab.icon}
                       ios_icon_name={tab.icon}
                       size={24}
-                      color={isActive ? theme.colors.primary : (theme.dark ? '#98989D' : '#000000')}
+                      color={isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.6)'}
                     />
                     <Text
                       style={[
                         styles.tabLabel,
-                        { color: theme.dark ? '#98989D' : '#8E8E93' },
-                        isActive && { color: theme.colors.primary, fontWeight: '600' },
+                        { color: 'rgba(255, 255, 255, 0.6)' },
+                        isActive && { color: '#ffffff', fontWeight: '600' },
                       ]}
                     >
                       {tab.label}
@@ -199,7 +195,7 @@ export default function FloatingTabBar({
 const styles = StyleSheet.create({
   safeArea: {
     position: 'absolute',
-    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
     zIndex: 1000,

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,35 +7,51 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { mockSizeGuides, predictFit, getBestFitSize } from '@/utils/sizeGuideHelper';
 import { BodyMeasurements, FitPrediction } from '@/types/bodyMeasurements';
-
-// Mock user measurements - in production, this would come from the body scan
-const mockUserMeasurements: BodyMeasurements = {
-  bust: 88,
-  waist: 70,
-  hip: 96,
-  shoulders: 40,
-  armLength: 60,
-  legsLength: 80,
-  feetSize: 25,
-};
+import { useAvatarStorage } from '@/hooks/useAvatarStorage';
+import { useRouter } from 'expo-router';
 
 export default function SizeGuideScreen() {
+  const router = useRouter();
+  const { avatar, loading: avatarLoading } = useAvatarStorage();
   const [selectedBrand, setSelectedBrand] = useState<string>('zara');
   const [predictions, setPredictions] = useState<FitPrediction[]>([]);
+  const [userMeasurements, setUserMeasurements] = useState<BodyMeasurements | null>(null);
 
-  React.useEffect(() => {
-    const sizeGuide = mockSizeGuides[selectedBrand];
-    if (sizeGuide) {
-      const fitPredictions = predictFit(mockUserMeasurements, sizeGuide);
-      setPredictions(fitPredictions);
+  // Load measurements from stored avatar data
+  useEffect(() => {
+    if (avatar?.measurements) {
+      // Convert stored measurements to BodyMeasurements format
+      const measurements: BodyMeasurements = {
+        bust: parseFloat(avatar.measurements.bust) || 0,
+        waist: parseFloat(avatar.measurements.waist) || 0,
+        hip: parseFloat(avatar.measurements.hip) || 0,
+        shoulders: 40, // Default value if not stored
+        armLength: 60, // Default value if not stored
+        legsLength: 80, // Default value if not stored
+        feetSize: 25, // Default value if not stored
+      };
+      console.log('Loaded measurements from avatar:', measurements);
+      setUserMeasurements(measurements);
     }
-  }, [selectedBrand]);
+  }, [avatar]);
+
+  // Calculate predictions when brand or measurements change
+  useEffect(() => {
+    if (userMeasurements) {
+      const sizeGuide = mockSizeGuides[selectedBrand];
+      if (sizeGuide) {
+        const fitPredictions = predictFit(userMeasurements, sizeGuide);
+        setPredictions(fitPredictions);
+      }
+    }
+  }, [selectedBrand, userMeasurements]);
 
   const bestFit = getBestFitSize(predictions);
 
@@ -134,6 +150,44 @@ export default function SizeGuideScreen() {
     </View>
   );
 
+  // Show loading state while avatar data is being loaded
+  if (avatarLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading your measurements...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show message if no avatar/measurements exist
+  if (!userMeasurements || userMeasurements.bust === 0) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.emptyContainer}>
+          <IconSymbol
+            ios_icon_name="person"
+            android_material_icon_name="person"
+            size={64}
+            color={colors.textSecondary}
+          />
+          <Text style={styles.emptyTitle}>No Measurements Found</Text>
+          <Text style={styles.emptySubtitle}>
+            Create your AI avatar first to get personalized size recommendations
+          </Text>
+          <TouchableOpacity
+            style={styles.createAvatarButton}
+            onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
+          >
+            <Text style={styles.createAvatarButtonText}>Create Avatar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
@@ -149,17 +203,29 @@ export default function SizeGuideScreen() {
           <View style={styles.measurementsCard}>
             <View style={styles.measurementRow}>
               <Text style={styles.measurementLabel}>Bust:</Text>
-              <Text style={styles.measurementValue}>{mockUserMeasurements.bust} cm</Text>
+              <Text style={styles.measurementValue}>{userMeasurements.bust} cm</Text>
             </View>
             <View style={styles.measurementRow}>
               <Text style={styles.measurementLabel}>Waist:</Text>
-              <Text style={styles.measurementValue}>{mockUserMeasurements.waist} cm</Text>
+              <Text style={styles.measurementValue}>{userMeasurements.waist} cm</Text>
             </View>
             <View style={styles.measurementRow}>
               <Text style={styles.measurementLabel}>Hip:</Text>
-              <Text style={styles.measurementValue}>{mockUserMeasurements.hip} cm</Text>
+              <Text style={styles.measurementValue}>{userMeasurements.hip} cm</Text>
             </View>
           </View>
+          <TouchableOpacity
+            style={styles.updateMeasurementsButton}
+            onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
+          >
+            <IconSymbol
+              ios_icon_name="edit"
+              android_material_icon_name="edit"
+              size={16}
+              color={colors.primary}
+            />
+            <Text style={styles.updateMeasurementsText}>Update Measurements</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -236,6 +302,48 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+    gap: 16,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  createAvatarButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  createAvatarButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.milkyWay,
+  },
   section: {
     marginBottom: 24,
   },
@@ -266,6 +374,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
     fontWeight: '700',
+  },
+  updateMeasurementsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  updateMeasurementsText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
   brandButtons: {
     flexDirection: 'row',
