@@ -176,7 +176,7 @@ export default function WishlistScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Wishlist</Text>
         {items.length > 0 && (
@@ -273,7 +273,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 100,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },

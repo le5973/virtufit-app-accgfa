@@ -134,7 +134,7 @@ export default function SizeGuideScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Size Guide</Text>
         <Text style={styles.subtitle}>
@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
+    paddingTop: 100,
     paddingBottom: 16,
   },
   title: {

@@ -137,7 +137,7 @@ export default function SocialScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Social</Text>
         <Text style={styles.subtitle}>Connect with friends and share wishlists</Text>
@@ -246,6 +246,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
+    paddingTop: 100,
     paddingBottom: 10,
   },
   title: {

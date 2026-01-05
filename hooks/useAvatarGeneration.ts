@@ -1,71 +1,59 @@
 
 import { useState } from 'react';
 import Constants from 'expo-constants';
-import { useAvatarStorage, AvatarData } from './useAvatarStorage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'BACKEND_URL_PLACEHOLDER';
+const BACKEND_URL = Constants.expoConfig?.extra?.BACKEND_URL || 'http://localhost:3000';
+const AVATAR_STORAGE_KEY = '@avatar_data';
 
-interface BodyMeasurements {
+export interface BodyMeasurements {
   height: number;
   weight: number;
-  chest?: number;
-  waist?: number;
-  hips?: number;
-  shoulderWidth?: number;
-  inseam?: number;
+  chest: number;
+  waist: number;
+  hips: number;
+  inseam: number;
 }
 
-export const useAvatarGeneration = () => {
-  const { avatar, saveAvatar } = useAvatarStorage();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export interface AvatarData {
+  imageUrl: string;
+  measurements: BodyMeasurements;
+  createdAt: string;
+}
 
-  // Generate avatar from FACE PHOTO ONLY + body measurements
-  const generateAvatar = async (
-    faceImageUri: string,
-    measurements: {
-      height: string;
-      weight: string;
-      bust?: string;
-      waist?: string;
-      hip?: string;
-    }
-  ): Promise<boolean> => {
-    setIsGenerating(true);
+export function useAvatarGeneration() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
+
+  const generateAvatar = async (faceImageUri: string, measurements: BodyMeasurements) => {
+    setLoading(true);
     setError(null);
 
     try {
-      // TODO: Backend Integration - Call the face-to-avatar generation API
-      // This endpoint will:
-      // 1. Extract face from uploaded photo using AI face detection
-      // 2. Remove background from face using AI background removal
-      // 3. Generate 3D body model from height, weight, and optional measurements
-      // 4. Map face texture onto 3D avatar head
-      // 5. Render final avatar on aesthetic podium background
-      // 6. Return URL of generated avatar image
+      console.log('Starting avatar generation...');
+      console.log('Backend URL:', BACKEND_URL);
+      console.log('Face image URI:', faceImageUri);
+      console.log('Measurements:', measurements);
+
+      // TODO: Backend Integration - This endpoint will:
+      // 1. Accept the face photo and body measurements
+      // 2. Use OpenAI Vision API to analyze the face photo
+      // 3. Remove background from the face photo using AI
+      // 4. Generate a full-body avatar using DALL-E with the face and measurements
+      // 5. Return the generated avatar URL
       
       const formData = new FormData();
-      
-      formData.append('faceImage', {
+      formData.append('face_image', {
         uri: faceImageUri,
         type: 'image/jpeg',
         name: 'face.jpg',
       } as any);
-      
-      formData.append('height', measurements.height);
-      formData.append('weight', measurements.weight);
-      
-      if (measurements.bust) {
-        formData.append('bust', measurements.bust);
-      }
-      if (measurements.waist) {
-        formData.append('waist', measurements.waist);
-      }
-      if (measurements.hip) {
-        formData.append('hip', measurements.hip);
-      }
+      formData.append('measurements', JSON.stringify(measurements));
 
-      const response = await fetch(`${BACKEND_URL}/api/generate-avatar`, {
+      console.log('Sending request to backend...');
+      
+      const response = await fetch(`${BACKEND_URL}/api/avatar/generate`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -73,48 +61,55 @@ export const useAvatarGeneration = () => {
         },
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to generate avatar');
+        const errorText = await response.text();
+        console.error('Backend error:', errorText);
+        throw new Error(`Failed to generate avatar: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
-      const generatedUri = data.avatarUrl;
+      console.log('Avatar generated successfully:', data);
 
-      if (!generatedUri) {
-        throw new Error('No avatar URL returned from server');
-      }
-
-      // Save avatar with measurements
-      const avatarData: AvatarData = {
-        imageUri: generatedUri,
-        measurements: {
-          height: measurements.height,
-          weight: measurements.weight,
-          bust: measurements.bust || '',
-          waist: measurements.waist || '',
-          hip: measurements.hip || '',
-        },
-        createdAt: new Date(),
+      const newAvatarData: AvatarData = {
+        imageUrl: data.avatar_url,
+        measurements,
+        createdAt: new Date().toISOString(),
       };
 
-      await saveAvatar(avatarData);
-      return true;
+      await AsyncStorage.setItem(AVATAR_STORAGE_KEY, JSON.stringify(newAvatarData));
+      setAvatarData(newAvatarData);
+
+      return newAvatarData;
     } catch (err) {
+      console.error('Avatar generation error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate avatar';
       setError(errorMessage);
-      console.error('Avatar generation error:', err);
-      return false;
+      throw err;
     } finally {
-      setIsGenerating(false);
+      setLoading(false);
+    }
+  };
+
+  const loadAvatar = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(AVATAR_STORAGE_KEY);
+      if (stored) {
+        const parsedData = JSON.parse(stored);
+        console.log('Loaded avatar from storage:', parsedData);
+        setAvatarData(parsedData);
+      }
+    } catch (err) {
+      console.error('Failed to load avatar:', err);
     }
   };
 
   return {
-    avatarUri: avatar?.imageUri || null,
-    isGenerating,
-    error,
     generateAvatar,
-    loadAvatar: () => {}, // Now handled by useAvatarStorage hook
+    loadAvatar,
+    loading,
+    error,
+    avatarData,
   };
-};
+}

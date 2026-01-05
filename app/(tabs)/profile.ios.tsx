@@ -311,7 +311,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 100,
     paddingBottom: 5,
     backgroundColor: colors.background,
     borderBottomWidth: 1,

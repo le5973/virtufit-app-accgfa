@@ -105,7 +105,7 @@ export default function WardrobeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>My Wardrobe</Text>
 
@@ -131,7 +131,7 @@ export default function WardrobeScreen() {
             autoCapitalize="none"
           />
           <TouchableOpacity style={styles.addButton} onPress={handleAddOutfit}>
-            <IconSymbol ios_icon_name="plus.circle.fill" android_material_icon_name="add-circle" size={24} color={colors.text} />
+            <IconSymbol ios_icon_name="plus.circle.fill" android_material_icon_name="add-circle" size={24} color="#fff" />
             <Text style={styles.addButtonText}>Add to Wardrobe</Text>
           </TouchableOpacity>
         </View>
@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingTop: 100,
     paddingBottom: 100,
   },
   title: {
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   addButtonText: {
-    color: colors.text,
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },

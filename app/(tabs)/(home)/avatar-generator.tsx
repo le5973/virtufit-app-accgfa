@@ -9,308 +9,376 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
+  Image,
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAvatarGeneration, BodyMeasurements } from '@/hooks/useAvatarGeneration';
+import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { AvatarPreview } from '@/components/AvatarPreview';
-import { useAvatarGeneration } from '@/hooks/useAvatarGeneration';
 
 export default function AvatarGeneratorScreen() {
   const router = useRouter();
-  const { avatarUri, isGenerating, generateAvatar } = useAvatarGeneration();
-  
-  const [faceImageUri, setFaceImageUri] = useState<string | null>(null);
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
-  const [bust, setBust] = useState('');
-  const [waist, setWaist] = useState('');
-  const [hip, setHip] = useState('');
+  const { generateAvatar, loading } = useAvatarGeneration();
+  const [faceImage, setFaceImage] = useState<string | null>(null);
+  const [measurements, setMeasurements] = useState<BodyMeasurements>({
+    height: 0,
+    weight: 0,
+    chest: 0,
+    waist: 0,
+    hips: 0,
+    inseam: 0,
+  });
 
   const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please grant camera roll permissions to upload a photo');
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [3, 4],
-      quality: 1,
+      aspect: [1, 1],
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      setFaceImageUri(result.assets[0].uri);
+      setFaceImage(result.assets[0].uri);
     }
   };
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Camera permission is required to take photos');
+      Alert.alert('Permission Required', 'Please grant camera permissions to take a photo');
       return;
     }
 
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      aspect: [3, 4],
-      quality: 1,
+      aspect: [1, 1],
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      setFaceImageUri(result.assets[0].uri);
+      setFaceImage(result.assets[0].uri);
     }
   };
 
-  const handleGenerateAvatar = async () => {
-    if (!faceImageUri) {
-      Alert.alert('Missing Photo', 'Please upload a face photo first');
+  const handleGenerate = async () => {
+    if (!faceImage) {
+      Alert.alert('Error', 'Please upload a face photo');
       return;
     }
 
-    if (!height || !weight) {
-      Alert.alert('Missing Measurements', 'Please enter at least height and weight');
+    if (measurements.height === 0 || measurements.weight === 0) {
+      Alert.alert('Error', 'Please enter at least height and weight');
       return;
     }
 
-    const measurements = {
-      height,
-      weight,
-      bust,
-      waist,
-      hip,
-    };
-
-    const result = await generateAvatar(faceImageUri, measurements);
-    
-    if (result) {
-      Alert.alert('Success!', 'Your AI avatar has been generated. Complete your style profile next!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)/(home)/style-questionnaire') }
+    try {
+      console.log('Generating avatar with face image and measurements...');
+      await generateAvatar(faceImage, measurements);
+      Alert.alert('Success', 'Avatar generated successfully!', [
+        { text: 'OK', onPress: () => router.back() }
       ]);
-    } else {
+    } catch (err) {
+      console.error('Avatar generation failed:', err);
       Alert.alert('Error', 'Failed to generate avatar. Please try again.');
     }
   };
 
   return (
-    <SafeAreaView style={commonStyles.wrapper} edges={['top']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <IconSymbol ios_icon_name="chevron.left" android_material_icon_name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={commonStyles.title}>Create Your AI Avatar</Text>
-            <Text style={commonStyles.text}>
-              Upload a face photo and enter your measurements
-            </Text>
-          </View>
-
-          {/* Face Photo Section */}
-          <View style={[commonStyles.card, styles.section]}>
-            <Text style={styles.sectionTitle}>📸 Face Photo</Text>
-            <Text style={styles.sectionSubtitle}>
-              Only your face is needed - we&apos;ll build the body!
-            </Text>
-            
-            <View style={styles.imageButtons}>
-              <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-                <IconSymbol ios_icon_name="photo.fill" android_material_icon_name="photo" size={32} color={colors.accent} />
-                <Text style={styles.imageButtonText}>Gallery</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
-                <IconSymbol ios_icon_name="camera.fill" android_material_icon_name="camera" size={32} color={colors.accentPink} />
-                <Text style={styles.imageButtonText}>Camera</Text>
-              </TouchableOpacity>
-            </View>
-
-            {faceImageUri && (
-              <View style={styles.previewContainer}>
-                <AvatarPreview
-                  avatarUri={faceImageUri}
-                  size="small"
-                  showPodium={false}
-                  onRetake={() => setFaceImageUri(null)}
-                />
-              </View>
-            )}
-          </View>
-
-          {/* Measurements Section */}
-          <View style={[commonStyles.card, styles.section]}>
-            <Text style={styles.sectionTitle}>📏 Body Measurements</Text>
-            <Text style={styles.sectionSubtitle}>Required fields *</Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Height (cm) *</Text>
-              <TextInput
-                style={commonStyles.input}
-                value={height}
-                onChangeText={setHeight}
-                placeholder="e.g., 175"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Weight (kg) *</Text>
-              <TextInput
-                style={commonStyles.input}
-                value={weight}
-                onChangeText={setWeight}
-                placeholder="e.g., 70"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <Text style={[styles.sectionSubtitle, { marginTop: 16 }]}>
-              Optional (for better accuracy)
-            </Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Bust (cm)</Text>
-              <TextInput
-                style={commonStyles.input}
-                value={bust}
-                onChangeText={setBust}
-                placeholder="e.g., 95"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Waist (cm)</Text>
-              <TextInput
-                style={commonStyles.input}
-                value={waist}
-                onChangeText={setWaist}
-                placeholder="e.g., 80"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Hip (cm)</Text>
-              <TextInput
-                style={commonStyles.input}
-                value={hip}
-                onChangeText={setHip}
-                placeholder="e.g., 95"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-
-          {/* Generate Button */}
-          <TouchableOpacity
-            style={[buttonStyles.primaryButton, styles.generateButton]}
-            onPress={handleGenerateAvatar}
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <ActivityIndicator color={colors.primary} />
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Create Your AI Avatar</Text>
+        <Text style={styles.subtitle}>Upload a face photo and enter your measurements</Text>
+        
+        <View style={styles.imageSection}>
+          <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+            {faceImage ? (
+              <Image source={{ uri: faceImage }} style={styles.image} />
             ) : (
-              <>
-                <IconSymbol ios_icon_name="sparkles" android_material_icon_name="star" size={24} color={colors.primary} />
-                <Text style={styles.generateButtonText}>Generate AI Avatar</Text>
-              </>
+              <View style={styles.imagePlaceholder}>
+                <IconSymbol 
+                  ios_icon_name="person.crop.circle" 
+                  android_material_icon_name="account-circle" 
+                  size={80} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.imageButtonText}>Upload Face Photo</Text>
+              </View>
             )}
           </TouchableOpacity>
 
-          {/* Preview Generated Avatar */}
-          {avatarUri && !isGenerating && (
-            <View style={[commonStyles.card, styles.section]}>
-              <Text style={styles.sectionTitle}>✨ Your AI Avatar</Text>
-              <AvatarPreview avatarUri={avatarUri} size="medium" />
+          <View style={styles.photoButtons}>
+            <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+              <IconSymbol 
+                ios_icon_name="photo" 
+                android_material_icon_name="photo" 
+                size={24} 
+                color={colors.text} 
+              />
+              <Text style={styles.photoButtonText}>Gallery</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+              <IconSymbol 
+                ios_icon_name="camera" 
+                android_material_icon_name="camera" 
+                size={24} 
+                color={colors.text} 
+              />
+              <Text style={styles.photoButtonText}>Camera</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.measurementsSection}>
+          <Text style={styles.sectionTitle}>Body Measurements</Text>
+          
+          <View style={styles.inputRow}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Height (cm)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="170"
+                placeholderTextColor={colors.grey}
+                value={measurements.height > 0 ? measurements.height.toString() : ''}
+                onChangeText={(text) => setMeasurements({ ...measurements, height: parseFloat(text) || 0 })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Weight (kg)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="70"
+                placeholderTextColor={colors.grey}
+                value={measurements.weight > 0 ? measurements.weight.toString() : ''}
+                onChangeText={(text) => setMeasurements({ ...measurements, weight: parseFloat(text) || 0 })}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputRow}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Chest (cm)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="95"
+                placeholderTextColor={colors.grey}
+                value={measurements.chest > 0 ? measurements.chest.toString() : ''}
+                onChangeText={(text) => setMeasurements({ ...measurements, chest: parseFloat(text) || 0 })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Waist (cm)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="80"
+                placeholderTextColor={colors.grey}
+                value={measurements.waist > 0 ? measurements.waist.toString() : ''}
+                onChangeText={(text) => setMeasurements({ ...measurements, waist: parseFloat(text) || 0 })}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputRow}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Hips (cm)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="100"
+                placeholderTextColor={colors.grey}
+                value={measurements.hips > 0 ? measurements.hips.toString() : ''}
+                onChangeText={(text) => setMeasurements({ ...measurements, hips: parseFloat(text) || 0 })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Inseam (cm)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="75"
+                placeholderTextColor={colors.grey}
+                value={measurements.inseam > 0 ? measurements.inseam.toString() : ''}
+                onChangeText={(text) => setMeasurements({ ...measurements, inseam: parseFloat(text) || 0 })}
+              />
+            </View>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.generateButton, loading && styles.generateButtonDisabled]}
+          onPress={handleGenerate}
+          disabled={loading}
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#fff" />
+              <Text style={styles.loadingText}>Generating your AI avatar...</Text>
+            </View>
+          ) : (
+            <View style={styles.buttonContent}>
+              <IconSymbol 
+                ios_icon_name="sparkles" 
+                android_material_icon_name="auto-awesome" 
+                size={24} 
+                color="#fff" 
+              />
+              <Text style={styles.generateButtonText}>Generate Avatar</Text>
             </View>
           )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 120,
-  },
-  header: {
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    padding: 8,
-    marginBottom: 16,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 16,
-  },
-  imageButtons: {
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 12,
-  },
-  imageButton: {
+  container: {
     flex: 1,
     backgroundColor: colors.background,
-    borderRadius: 16,
-    padding: 24,
+  },
+  content: {
+    padding: 20,
+    paddingTop: 100,
+    paddingBottom: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.grey,
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  imageSection: {
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 30,
+  },
+  imageButton: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.cardBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    marginBottom: 16,
     borderWidth: 2,
-    borderColor: colors.glass,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   imageButtonText: {
-    color: colors.text,
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
+    marginTop: 12,
   },
-  previewContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  generateButton: {
-    marginVertical: 24,
+  photoButtons: {
     flexDirection: 'row',
     gap: 12,
   },
+  photoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  photoButtonText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  measurementsSection: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  inputGroup: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 14,
+    color: colors.text,
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  input: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
+  },
+  generateButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  generateButtonDisabled: {
+    opacity: 0.6,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   generateButtonText: {
-    color: colors.primary,
+    color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

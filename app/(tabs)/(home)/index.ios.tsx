@@ -20,7 +20,7 @@ export default function HomeScreen() {
   }, [avatar, styleProfile]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Your AI Avatar</Text>
         
@@ -33,7 +33,12 @@ export default function HomeScreen() {
             style={styles.createButton}
             onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
           >
-            <IconSymbol ios_icon_name="person.crop.circle.badge.plus" android_material_icon_name="add-circle" size={24} color={colors.text} />
+            <IconSymbol 
+              ios_icon_name="person.crop.circle.badge.plus" 
+              android_material_icon_name="person-add" 
+              size={24} 
+              color="#fff" 
+            />
             <Text style={styles.createButtonText}>Create Your Avatar</Text>
           </TouchableOpacity>
         )}
@@ -57,6 +62,12 @@ export default function HomeScreen() {
             style={styles.updateButton}
             onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
           >
+            <IconSymbol 
+              ios_icon_name="arrow.clockwise" 
+              android_material_icon_name="refresh" 
+              size={20} 
+              color={colors.text} 
+            />
             <Text style={styles.updateButtonText}>Update Avatar</Text>
           </TouchableOpacity>
         )}
@@ -72,6 +83,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingTop: 100,
     paddingBottom: 100,
     alignItems: 'center',
   },
@@ -93,7 +105,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   createButtonText: {
-    color: colors.text,
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -125,11 +137,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   updateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.backgroundAlt,
     padding: 16,
     borderRadius: 12,
     width: '100%',
-    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   updateButtonText: {
     color: colors.text,
