@@ -1,84 +1,27 @@
 
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
-// Modern vibrant color scheme inspired by fitness/health apps
 export const colors = {
-  // Primary deep purples
-  primary: '#2D1B69',
-  primaryDark: '#1A0F3E',
-  primaryLight: '#4A2C7F',
-  
-  // Vibrant accents
-  accent: '#00D9C0',      // Teal/Cyan
-  accentPink: '#FF4081',  // Hot Pink
-  accentCoral: '#FF6B6B', // Coral
-  accentPurple: '#9C27B0', // Purple
-  
-  // Backgrounds
-  background: '#1A0F3E',
-  backgroundAlt: '#2D1B69',
-  backgroundCard: '#3D2A7A',
-  
-  // Text
-  text: '#FFFFFF',
-  textSecondary: '#B8B8D1',
-  textMuted: '#8E8EA9',
-  
-  // UI Elements
-  success: '#00D9C0',
-  warning: '#FFB74D',
-  error: '#FF6B6B',
-  info: '#64B5F6',
-  
-  // Gradients
-  gradientStart: '#2D1B69',
-  gradientEnd: '#4A2C7F',
-  
-  // Glass/Overlay
-  overlay: 'rgba(29, 27, 105, 0.85)',
-  glass: 'rgba(255, 255, 255, 0.1)',
+  primary: '#162456',    // Material Blue
+  secondary: '#193cb8',  // Darker Blue
+  accent: '#64B5F6',     // Light Blue
+  background: '#FFFFFF',  // White background
+  backgroundAlt: '#F5F5F5',  // Light grey background
+  text: '#000000',       // Black text for contrast
+  grey: '#90CAF9',       // Light Blue Grey
+  card: '#FFFFFF',       // White card background
 };
 
 export const buttonStyles = StyleSheet.create({
   instructionsButton: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     alignSelf: 'center',
     width: '100%',
-    borderRadius: 16,
-    paddingVertical: 16,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   backButton: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: colors.backgroundAlt,
     alignSelf: 'center',
     width: '100%',
-    borderRadius: 16,
-    paddingVertical: 16,
-  },
-  primaryButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  secondaryButton: {
-    backgroundColor: colors.accentPink,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 
@@ -104,23 +47,16 @@ export const commonStyles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
     textAlign: 'center',
     color: colors.text,
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 10,
+    marginBottom: 10
   },
   text: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: colors.text,
     marginBottom: 8,
     lineHeight: 24,
     textAlign: 'center',
@@ -136,49 +72,19 @@ export const commonStyles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 20,
-    padding: 20,
-    marginVertical: 10,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  glassCard: {
-    backgroundColor: colors.glass,
-    borderRadius: 20,
-    padding: 20,
-    marginVertical: 10,
-    width: '100%',
+    backgroundColor: colors.backgroundAlt,
+    borderColor: colors.grey,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 8,
+    width: '100%',
+    boxShadow: '0px 2px 3px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
   },
   icon: {
     width: 60,
     height: 60,
-    tintColor: colors.accent,
-  },
-  input: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 12,
-    padding: 16,
-    color: colors.text,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  badge: {
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  badgeText: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
+    tintColor: "white",
   },
 });
