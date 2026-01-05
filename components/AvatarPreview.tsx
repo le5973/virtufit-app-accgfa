@@ -1,66 +1,52 @@
 
 import React from 'react';
-import { View, Image, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { colors } from '@/styles/commonStyles';
-import { IconSymbol } from '@/components/IconSymbol';
+import { IconSymbol } from './IconSymbol';
 
 interface AvatarPreviewProps {
   avatarUri: string | null;
-  isGenerating?: boolean;
-  width?: number;
-  height?: number;
-  showBackgroundInfo?: boolean;
+  onRetake?: () => void;
+  size?: 'small' | 'medium' | 'large';
+  showPodium?: boolean;
 }
 
 export const AvatarPreview: React.FC<AvatarPreviewProps> = ({
   avatarUri,
-  isGenerating = false,
-  width = 200,
-  height = 300,
-  showBackgroundInfo = true,
+  onRetake,
+  size = 'large',
+  showPodium = true,
 }) => {
-  if (isGenerating) {
-    return (
-      <View style={[styles.container, { width, height }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Removing background...</Text>
-        <Text style={styles.loadingSubtext}>Generating AI avatar</Text>
-      </View>
-    );
-  }
+  const sizeStyles = {
+    small: { width: 120, height: 160 },
+    medium: { width: 200, height: 280 },
+    large: { width: 280, height: 400 },
+  };
 
   if (!avatarUri) {
     return (
-      <View style={[styles.container, styles.placeholder, { width, height }]}>
-        <IconSymbol 
-          ios_icon_name="person.crop.circle.badge.plus" 
-          android_material_icon_name="person-add" 
-          size={48} 
-          color={colors.textSecondary} 
-        />
+      <View style={[styles.placeholder, sizeStyles[size]]}>
+        <IconSymbol name="person.fill" size={60} color={colors.textMuted} />
         <Text style={styles.placeholderText}>No Avatar Generated</Text>
-        <Text style={styles.placeholderSubtext}>Upload a photo to create your AI avatar</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { width, height }]}>
-      <Image 
-        source={{ uri: avatarUri }} 
-        style={styles.avatar} 
-        resizeMode="contain" 
-      />
-      {showBackgroundInfo && (
-        <View style={styles.infoLabel}>
-          <IconSymbol 
-            ios_icon_name="checkmark.circle.fill" 
-            android_material_icon_name="check-circle" 
-            size={16} 
-            color={colors.galaxy} 
-          />
-          <Text style={styles.infoLabelText}>Background Removed</Text>
-        </View>
+    <View style={styles.container}>
+      {showPodium && <View style={styles.podium} />}
+      <View style={[styles.avatarContainer, sizeStyles[size]]}>
+        <Image
+          source={{ uri: avatarUri }}
+          style={styles.avatar}
+          resizeMode="contain"
+        />
+      </View>
+      {onRetake && (
+        <TouchableOpacity style={styles.retakeButton} onPress={onRetake}>
+          <IconSymbol name="camera.fill" size={20} color={colors.primary} />
+          <Text style={styles.retakeText}>Retake</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -68,61 +54,64 @@ export const AvatarPreview: React.FC<AvatarPreviewProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  avatarContainer: {
+    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: colors.card,
-  },
-  placeholder: {
+    backgroundColor: colors.backgroundCard,
     borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-    gap: 12,
-  },
-  placeholderText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  placeholderSubtext: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    borderColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   avatar: {
     width: '100%',
     height: '100%',
   },
-  loadingText: {
-    marginTop: 16,
-    color: colors.text,
-    fontSize: 16,
+  placeholder: {
+    borderRadius: 20,
+    backgroundColor: colors.backgroundCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.textMuted,
+    borderStyle: 'dashed',
+  },
+  placeholderText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    marginTop: 12,
     fontWeight: '600',
   },
-  loadingSubtext: {
-    marginTop: 4,
-    color: colors.textSecondary,
-    fontSize: 13,
-  },
-  infoLabel: {
+  podium: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    bottom: -20,
+    width: 200,
+    height: 40,
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    opacity: 0.3,
+    zIndex: -1,
+  },
+  retakeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.galaxy,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 16,
+    gap: 8,
   },
-  infoLabelText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.galaxy,
+  retakeText: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

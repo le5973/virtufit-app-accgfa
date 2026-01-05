@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "Natively",
-    "slug": "Natively",
+    "name": "VirtuFit",
+    "slug": "VirtuFit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -45,5 +44,6 @@
       "router": {},
       "backendUrl": "BACKEND_URL_PLACEHOLDER"
     }
-  }
+  },
+  "scheme": "VirtuFit"
 }

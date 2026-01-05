@@ -19,9 +19,13 @@ import { useAvatarGeneration } from '@/hooks/useAvatarGeneration';
 import { IconSymbol } from '@/components/IconSymbol';
 
 export default function HomeScreen() {
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [facePhoto, setFacePhoto] = useState<string | null>(null);
   const [height, setHeight] = useState<string>('');
   const [weight, setWeight] = useState<string>('');
+  const [chest, setChest] = useState<string>('');
+  const [waist, setWaist] = useState<string>('');
+  const [hips, setHips] = useState<string>('');
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
 
   const { avatarUri, isGenerating, error, generateAvatar, loadAvatar } = useAvatarGeneration();
 
@@ -47,7 +51,7 @@ export default function HomeScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setUploadedImage(result.assets[0].uri);
+        setFacePhoto(result.assets[0].uri);
       }
     } catch (err) {
       console.log('Error picking image:', err);
@@ -71,7 +75,7 @@ export default function HomeScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setUploadedImage(result.assets[0].uri);
+        setFacePhoto(result.assets[0].uri);
       }
     } catch (err) {
       console.log('Error taking photo:', err);
@@ -80,8 +84,8 @@ export default function HomeScreen() {
   };
 
   const handleGenerateAvatar = async () => {
-    if (!uploadedImage) {
-      Alert.alert('Missing Photo', 'Please upload a photo first');
+    if (!facePhoto) {
+      Alert.alert('Missing Photo', 'Please upload a face photo first');
       return;
     }
     
@@ -97,11 +101,17 @@ export default function HomeScreen() {
       return;
     }
 
+    const additionalMeasurements = {
+      chest: chest ? parseFloat(chest) : undefined,
+      waist: waist ? parseFloat(waist) : undefined,
+      hips: hips ? parseFloat(hips) : undefined,
+    };
+
     try {
-      await generateAvatar(uploadedImage, heightNum, weightNum);
+      await generateAvatar(facePhoto, heightNum, weightNum, additionalMeasurements);
       Alert.alert(
         'Success!', 
-        'Your AI avatar has been created with an aesthetic background. Visit Wishlist or Wardrobe to try on clothes!',
+        'Your AI avatar has been created! The body was generated from your measurements and your face was applied. Visit Wishlist or Wardrobe to try on clothes!',
         [{ text: 'OK' }]
       );
     } catch (err) {
@@ -114,13 +124,13 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Create Your AI Avatar</Text>
         <Text style={styles.subtitle}>
-          Upload a photo and provide measurements. AI will remove the background and create a human body replica with an aesthetic background.
+          📸 Upload a face photo only - we&apos;ll build the body from your measurements!
         </Text>
       </View>
 
-      {avatarUri && !uploadedImage && (
+      {avatarUri && !facePhoto && (
         <View style={styles.existingAvatarSection}>
-          <Text style={styles.sectionTitle}>Your AI Avatar</Text>
+          <Text style={styles.sectionTitle}>✨ Your AI Avatar</Text>
           <AvatarPreview
             avatarUri={avatarUri}
             isGenerating={false}
@@ -133,10 +143,10 @@ export default function HomeScreen() {
               ios_icon_name="info.circle"
               android_material_icon_name="info"
               size={20}
-              color={colors.primary}
+              color={colors.accent}
             />
             <Text style={styles.updatePromptText}>
-              Upload a new photo below to update your avatar
+              Upload a new face photo below to update your avatar
             </Text>
           </View>
         </View>
@@ -144,15 +154,27 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>
-          {avatarUri ? 'Update Avatar' : 'Step 1: Upload Photo'}
+          {avatarUri ? '📸 Update Face Photo' : '📸 Step 1: Face Photo'}
         </Text>
+        <View style={styles.infoBox}>
+          <IconSymbol
+            ios_icon_name="face.smiling"
+            android_material_icon_name="face"
+            size={24}
+            color={colors.accent}
+          />
+          <Text style={styles.infoBoxText}>
+            Only your face is needed! AI will generate the full body from measurements.
+          </Text>
+        </View>
+        
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
             <IconSymbol 
               ios_icon_name="photo" 
               android_material_icon_name="photo" 
               size={24} 
-              color={colors.primary} 
+              color={colors.accent} 
             />
             <Text style={styles.imageButtonText}>Gallery</Text>
           </TouchableOpacity>
@@ -161,54 +183,121 @@ export default function HomeScreen() {
               ios_icon_name="camera" 
               android_material_icon_name="camera" 
               size={24} 
-              color={colors.primary} 
+              color={colors.accentPink} 
             />
             <Text style={styles.imageButtonText}>Camera</Text>
           </TouchableOpacity>
         </View>
 
-        {uploadedImage && (
+        {facePhoto && (
           <View style={styles.previewContainer}>
-            <Image source={{ uri: uploadedImage }} style={styles.previewImage} />
+            <Image source={{ uri: facePhoto }} style={styles.previewImage} />
             <View style={styles.mediaTypeLabel}>
               <IconSymbol 
-                ios_icon_name="photo" 
-                android_material_icon_name="photo" 
+                ios_icon_name="checkmark.circle.fill" 
+                android_material_icon_name="check-circle" 
                 size={16} 
                 color="#fff" 
               />
-              <Text style={styles.mediaTypeLabelText}>Photo Uploaded</Text>
+              <Text style={styles.mediaTypeLabelText}>Face Photo Ready</Text>
             </View>
+            <TouchableOpacity 
+              style={styles.retakeButton}
+              onPress={() => setFacePhoto(null)}
+            >
+              <IconSymbol 
+                ios_icon_name="arrow.clockwise" 
+                android_material_icon_name="refresh" 
+                size={16} 
+                color={colors.text} 
+              />
+              <Text style={styles.retakeButtonText}>Retake</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>
-          {avatarUri ? 'Update Measurements' : 'Step 2: Enter Measurements'}
+          {avatarUri ? '📏 Update Measurements' : '📏 Step 2: Body Measurements'}
         </Text>
+        
+        <View style={styles.requiredLabel}>
+          <Text style={styles.requiredLabelText}>Required *</Text>
+        </View>
+        
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Height (cm)</Text>
+          <Text style={styles.inputLabel}>Height (cm) *</Text>
           <TextInput
             style={styles.input}
-            placeholder="170"
+            placeholder="e.g., 175"
             keyboardType="numeric"
             value={height}
             onChangeText={setHeight}
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.textMuted}
           />
         </View>
+        
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Weight (kg)</Text>
+          <Text style={styles.inputLabel}>Weight (kg) *</Text>
           <TextInput
             style={styles.input}
-            placeholder="70"
+            placeholder="e.g., 70"
             keyboardType="numeric"
             value={weight}
             onChangeText={setWeight}
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.textMuted}
           />
         </View>
+
+        <TouchableOpacity 
+          style={styles.optionalToggle}
+          onPress={() => setShowOptionalFields(!showOptionalFields)}
+        >
+          <Text style={styles.optionalToggleText}>
+            {showOptionalFields ? '▼' : '▶'} Optional measurements (for better accuracy)
+          </Text>
+        </TouchableOpacity>
+
+        {showOptionalFields && (
+          <React.Fragment>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Chest (cm)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 95"
+                keyboardType="numeric"
+                value={chest}
+                onChangeText={setChest}
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Waist (cm)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 80"
+                keyboardType="numeric"
+                value={waist}
+                onChangeText={setWaist}
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Hips (cm)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 95"
+                keyboardType="numeric"
+                value={hips}
+                onChangeText={setHips}
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
+          </React.Fragment>
+        )}
       </View>
 
       <TouchableOpacity 
@@ -218,7 +307,7 @@ export default function HomeScreen() {
       >
         {isGenerating ? (
           <React.Fragment>
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.primary} />
             <Text style={styles.generateButtonText}>Processing...</Text>
           </React.Fragment>
         ) : (
@@ -227,7 +316,7 @@ export default function HomeScreen() {
               ios_icon_name="sparkles"
               android_material_icon_name="auto-awesome"
               size={20}
-              color="#fff"
+              color={colors.primary}
             />
             <Text style={styles.generateButtonText}>
               {avatarUri ? 'Update AI Avatar' : 'Generate AI Avatar'}
@@ -250,61 +339,71 @@ export default function HomeScreen() {
 
       {isGenerating && (
         <View style={styles.processingInfo}>
-          <Text style={styles.processingTitle}>AI Processing Steps:</Text>
+          <Text style={styles.processingTitle}>🤖 AI Processing Steps:</Text>
           <View style={styles.processingStep}>
             <IconSymbol 
               ios_icon_name="1.circle.fill" 
               android_material_icon_name="looks-one" 
               size={20} 
-              color={colors.primary} 
+              color={colors.accent} 
             />
-            <Text style={styles.processingStepText}>Removing background from photo</Text>
+            <Text style={styles.processingStepText}>Extracting face from photo</Text>
           </View>
           <View style={styles.processingStep}>
             <IconSymbol 
               ios_icon_name="2.circle.fill" 
               android_material_icon_name="looks-two" 
               size={20} 
-              color={colors.primary} 
+              color={colors.accent} 
             />
-            <Text style={styles.processingStepText}>Generating AI human body replica</Text>
+            <Text style={styles.processingStepText}>Removing background from face</Text>
           </View>
           <View style={styles.processingStep}>
             <IconSymbol 
               ios_icon_name="3.circle.fill" 
               android_material_icon_name="looks-3" 
               size={20} 
-              color={colors.primary} 
+              color={colors.accent} 
             />
-            <Text style={styles.processingStepText}>Adding aesthetic background</Text>
+            <Text style={styles.processingStepText}>Generating 3D body from measurements</Text>
           </View>
           <View style={styles.processingStep}>
             <IconSymbol 
               ios_icon_name="4.circle.fill" 
               android_material_icon_name="looks-4" 
               size={20} 
-              color={colors.primary} 
+              color={colors.accent} 
             />
-            <Text style={styles.processingStepText}>Finalizing avatar model</Text>
+            <Text style={styles.processingStepText}>Applying face to 3D avatar</Text>
+          </View>
+          <View style={styles.processingStep}>
+            <IconSymbol 
+              ios_icon_name="5.circle.fill" 
+              android_material_icon_name="looks-5" 
+              size={20} 
+              color={colors.accent} 
+            />
+            <Text style={styles.processingStepText}>Rendering on aesthetic podium</Text>
           </View>
         </View>
       )}
 
       <View style={styles.infoSection}>
         <IconSymbol 
-          ios_icon_name="info.circle" 
-          android_material_icon_name="info" 
+          ios_icon_name="lightbulb.fill" 
+          android_material_icon_name="lightbulb" 
           size={24} 
-          color={colors.primary} 
+          color={colors.accent} 
         />
         <View style={styles.infoContent}>
           <Text style={styles.infoTitle}>How it works:</Text>
           <Text style={styles.infoText}>
-            • AI removes the background from your photo{'\n'}
-            • Creates a clean human body replica{'\n'}
-            • Adds an aesthetic background{'\n'}
-            • Ready for virtual clothing try-on{'\n'}
-            • Visit Wishlist or Wardrobe to try on clothes
+            • Upload ONLY a face photo (no full body needed){'\n'}
+            • AI extracts and isolates your face{'\n'}
+            • Generates full 3D body from your measurements{'\n'}
+            • Applies your face to the generated body{'\n'}
+            • Renders on aesthetic podium background{'\n'}
+            • Ready for virtual clothing try-on!
           </Text>
         </View>
       </View>
@@ -345,13 +444,13 @@ const styles = StyleSheet.create({
   updatePrompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.backgroundCard,
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
     gap: 8,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.accent,
   },
   updatePromptText: {
     fontSize: 14,
@@ -368,6 +467,23 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  infoBoxText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
   buttonRow: {
     flexDirection: 'row',
     gap: 12,
@@ -377,9 +493,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.backgroundCard,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.accent,
     borderRadius: 12,
     padding: 16,
     gap: 8,
@@ -387,14 +503,16 @@ const styles = StyleSheet.create({
   imageButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.text,
   },
   previewContainer: {
     marginTop: 16,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: colors.card,
+    backgroundColor: colors.backgroundCard,
     position: 'relative',
+    borderWidth: 2,
+    borderColor: colors.accent,
   },
   previewImage: {
     width: '100%',
@@ -407,7 +525,7 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -416,7 +534,39 @@ const styles = StyleSheet.create({
   mediaTypeLabelText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.primary,
+  },
+  retakeButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  retakeButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  requiredLabel: {
+    backgroundColor: colors.accentPink,
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 12,
+  },
+  requiredLabelText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
   },
   inputContainer: {
     marginBottom: 16,
@@ -428,23 +578,41 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.backgroundCard,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glass,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     color: colors.text,
   },
+  optionalToggle: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.glass,
+  },
+  optionalToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
   generateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
     borderRadius: 12,
     padding: 18,
     marginVertical: 24,
     gap: 8,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   generateButtonDisabled: {
     opacity: 0.6,
@@ -452,7 +620,7 @@ const styles = StyleSheet.create({
   generateButtonText: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.primary,
   },
   errorContainer: {
     flexDirection: 'row',
@@ -470,12 +638,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   processingInfo: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.backgroundCard,
     borderRadius: 12,
     padding: 20,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderWidth: 2,
+    borderColor: colors.accent,
   },
   processingTitle: {
     fontSize: 16,
@@ -492,16 +660,16 @@ const styles = StyleSheet.create({
   processingStepText: {
     flex: 1,
     fontSize: 14,
-    color: colors.text,
+    color: colors.textSecondary,
   },
   infoSection: {
     flexDirection: 'row',
-    backgroundColor: colors.card,
+    backgroundColor: colors.backgroundCard,
     borderRadius: 12,
     padding: 20,
     gap: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glass,
   },
   infoContent: {
     flex: 1,

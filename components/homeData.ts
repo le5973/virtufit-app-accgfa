@@ -1,22 +1,26 @@
+
 export const modalDemos = [
   {
-    title: "Standard Modal",
-    description: "Full screen modal presentation",
+    title: "Create AI Avatar",
+    description: "Generate your 3D avatar from a face photo + measurements",
+    route: "/(tabs)/(home)/avatar-generator",
+    color: "#00D9C0",
+    icon: "person.fill.viewfinder",
+  },
+  {
+    title: "Virtual Try-On",
+    description: "See how clothes look on your AI avatar",
     route: "/modal",
-    color: "#007AFF",
+    color: "#FF4081",
+    icon: "tshirt.fill",
   },
   {
-    title: "Form Sheet",
-    description: "Bottom sheet with detents and grabber",
+    title: "My Wardrobe",
+    description: "Manage your saved outfits and clothing items",
     route: "/formsheet",
-    color: "#34C759",
+    color: "#9C27B0",
+    icon: "square.grid.2x2.fill",
   },
-  {
-    title: "Transparent Modal",
-    description: "Overlay without obscuring background",
-    route: "/transparent-modal",
-    color: "#FF9500",
-  }
 ];
 
 export type ModalDemo = typeof modalDemos[0];
