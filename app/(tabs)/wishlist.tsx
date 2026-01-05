@@ -6,20 +6,19 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   TextInput,
   Alert,
   Linking,
   Share,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/styles/commonStyles';
+import { colors, commonStyles, shadows, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAvatarGeneration } from '@/hooks/useAvatarGeneration';
 import { VirtualTryOn } from '@/components/VirtualTryOn';
 import { WishlistItem } from '@/types/bodyMeasurements';
+import { ErvenistaBranding } from '@/components/ErvenistaBranding';
 
 export default function WishlistScreen() {
   const { items, addItem, removeItem, togglePublic } = useWishlist();
@@ -41,7 +40,7 @@ export default function WishlistScreen() {
     addItem({
       name: newItemName.trim(),
       websiteUrl: newItemUrl.trim(),
-      imageUrl: '', // Will be extracted by backend
+      imageUrl: '',
       websiteName: new URL(newItemUrl).hostname,
       price: '',
       isPublic: false,
@@ -83,7 +82,7 @@ export default function WishlistScreen() {
         return;
       }
 
-      const message = `Check out my wishlist:\n\n${publicItems.map(item => 
+      const message = `Check out my Ervenista wishlist:\n\n${publicItems.map(item => 
         `${item.name} - ${item.websiteUrl}`
       ).join('\n\n')}`;
 
@@ -100,8 +99,11 @@ export default function WishlistScreen() {
   };
 
   const renderWishlistItem = (item: WishlistItem) => (
-    <View key={item.id} style={styles.itemCard}>
+    <View key={item.id} style={[styles.itemCard, shadows.small]}>
       <View style={styles.itemHeader}>
+        <View style={styles.itemIconCircle}>
+          <IconSymbol android_material_icon_name="favorite" size={20} color="#FFFFFF" />
+        </View>
         <View style={styles.itemInfo}>
           <Text style={styles.itemName}>{item.name}</Text>
           <Text style={styles.itemWebsite}>{item.websiteName}</Text>
@@ -113,10 +115,9 @@ export default function WishlistScreen() {
             style={styles.iconButton}
           >
             <IconSymbol
-              ios_icon_name={item.isPublic ? 'eye' : 'eye.slash'}
-              android_material_icon_name={item.isPublic ? 'visibility' : 'visibility-off'}
+              android_material_icon_name={item.isPublic ? 'visibility' : 'visibility_off'}
               size={20}
-              color={item.isPublic ? colors.galaxy : colors.textSecondary}
+              color={item.isPublic ? colors.primary : colors.textSecondary}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -124,7 +125,6 @@ export default function WishlistScreen() {
             style={styles.iconButton}
           >
             <IconSymbol
-              ios_icon_name="trash"
               android_material_icon_name="delete"
               size={20}
               color={colors.error}
@@ -133,33 +133,33 @@ export default function WishlistScreen() {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.websiteButton}
-        onPress={() => handleOpenWebsite(item.websiteUrl)}
-      >
-        <IconSymbol
-          ios_icon_name="link"
-          android_material_icon_name="link"
-          size={16}
-          color={colors.primary}
-        />
-        <Text style={styles.websiteButtonText}>View Product</Text>
-      </TouchableOpacity>
-
-      {avatarUri && (
+      <View style={styles.buttonRow}>
         <TouchableOpacity
-          style={styles.tryOnButton}
-          onPress={() => setSelectedItemForTryOn(item)}
+          style={[buttonStyles.outline, styles.actionButton]}
+          onPress={() => handleOpenWebsite(item.websiteUrl)}
         >
           <IconSymbol
-            ios_icon_name="sparkles"
-            android_material_icon_name="auto-awesome"
+            android_material_icon_name="link"
             size={16}
-            color="#fff"
+            color={colors.primary}
           />
-          <Text style={styles.tryOnButtonText}>Virtual Try-On</Text>
+          <Text style={[buttonStyles.outlineText, styles.actionButtonText]}>View Product</Text>
         </TouchableOpacity>
-      )}
+
+        {avatarUri && (
+          <TouchableOpacity
+            style={[buttonStyles.primary, styles.actionButton]}
+            onPress={() => setSelectedItemForTryOn(item)}
+          >
+            <IconSymbol
+              android_material_icon_name="auto_awesome"
+              size={16}
+              color="#FFFFFF"
+            />
+            <Text style={[buttonStyles.primaryText, styles.actionButtonText]}>Try On</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {selectedItemForTryOn?.id === item.id && avatarUri && (
         <VirtualTryOn
@@ -176,31 +176,32 @@ export default function WishlistScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <ErvenistaBranding size="small" variant="minimal" />
+          {items.length > 0 && (
+            <TouchableOpacity onPress={handleShareWishlist} style={styles.shareButton}>
+              <IconSymbol
+                android_material_icon_name="share"
+                size={24}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
         <Text style={styles.title}>Wishlist</Text>
-        {items.length > 0 && (
-          <TouchableOpacity onPress={handleShareWishlist} style={styles.shareButton}>
-            <IconSymbol
-              ios_icon_name="square.and.arrow.up"
-              android_material_icon_name="share"
-              size={20}
-              color={colors.primary}
-            />
-          </TouchableOpacity>
-        )}
       </View>
 
       {!avatarUri && (
-        <View style={styles.noAvatarBanner}>
+        <View style={[styles.noAvatarBanner, shadows.small]}>
           <IconSymbol
-            ios_icon_name="info.circle"
             android_material_icon_name="info"
             size={20}
             color={colors.primary}
           />
           <Text style={styles.noAvatarText}>
-            Create your AI avatar in the Home tab to enable virtual try-on
+            Create your AI avatar to enable virtual try-on
           </Text>
         </View>
       )}
@@ -210,17 +211,17 @@ export default function WishlistScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.addSection}>
-          <Text style={styles.sectionTitle}>Add New Item</Text>
+        <View style={[styles.addSection, shadows.medium]}>
+          <Text style={commonStyles.heading}>Add New Item</Text>
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="Product name"
             value={newItemName}
             onChangeText={setNewItemName}
             placeholderTextColor={colors.textSecondary}
           />
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="Product URL"
             value={newItemUrl}
             onChangeText={setNewItemUrl}
@@ -228,24 +229,24 @@ export default function WishlistScreen() {
             autoCapitalize="none"
             keyboardType="url"
           />
-          <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
-            <IconSymbol
-              ios_icon_name="plus.circle.fill"
-              android_material_icon_name="add-circle"
-              size={20}
-              color="#fff"
-            />
-            <Text style={styles.addButtonText}>Add to Wishlist</Text>
+          <TouchableOpacity style={buttonStyles.primary} onPress={handleAddItem}>
+            <View style={styles.buttonContent}>
+              <IconSymbol
+                android_material_icon_name="add_circle"
+                size={20}
+                color="#FFFFFF"
+              />
+              <Text style={buttonStyles.primaryText}>Add to Wishlist</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
         {items.length === 0 ? (
           <View style={styles.emptyState}>
             <IconSymbol
-              ios_icon_name="heart"
-              android_material_icon_name="favorite-border"
+              android_material_icon_name="favorite_border"
               size={64}
-              color={colors.textSecondary}
+              color={colors.textLight}
             />
             <Text style={styles.emptyStateText}>Your wishlist is empty</Text>
             <Text style={styles.emptyStateSubtext}>
@@ -254,10 +255,18 @@ export default function WishlistScreen() {
           </View>
         ) : (
           <View style={styles.itemsList}>
-            <Text style={styles.sectionTitle}>Your Items ({items.length})</Text>
+            <View style={commonStyles.sectionHeader}>
+              <Text style={commonStyles.subtitle}>Your Items</Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{items.length}</Text>
+              </View>
+            </View>
             {items.map(renderWishlistItem)}
           </View>
         )}
+
+        {/* Bottom Padding for Tab Bar */}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -269,18 +278,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 100,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.text,
   },
   shareButton: {
@@ -310,44 +321,19 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 120,
   },
   addSection: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 12,
   },
-  addButton: {
+  buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
     gap: 8,
-    marginTop: 8,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
   },
   emptyState: {
     alignItems: 'center',
@@ -368,18 +354,39 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   itemsList: {
-    gap: 16,
+    marginBottom: 24,
+  },
+  countBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  countText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   itemCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   itemHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  itemIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   itemInfo: {
     flex: 1,
@@ -402,40 +409,25 @@ const styles = StyleSheet.create({
   },
   itemActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 4,
   },
   iconButton: {
     padding: 8,
   },
-  websiteButton: {
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 10,
-    padding: 12,
     gap: 6,
-    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  websiteButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  tryOnButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    padding: 12,
-    gap: 6,
-  },
-  tryOnButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+  actionButtonText: {
+    fontSize: 13,
   },
 });

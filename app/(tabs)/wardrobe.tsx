@@ -13,9 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useURL } from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors } from '@/styles/commonStyles';
+import { colors, commonStyles, shadows, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
+import { ErvenistaBranding } from '@/components/ErvenistaBranding';
 
 interface OutfitItem {
   id: string;
@@ -105,44 +106,65 @@ export default function WardrobeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <ErvenistaBranding size="small" variant="minimal" />
         <Text style={styles.title}>My Wardrobe</Text>
+      </View>
 
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.avatarSection}>
           <AvatarDisplay size="medium" />
         </View>
 
-        <View style={styles.addSection}>
-          <Text style={styles.sectionTitle}>Add New Outfit</Text>
+        <View style={[styles.addSection, shadows.medium]}>
+          <Text style={commonStyles.heading}>Add New Outfit</Text>
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="Outfit Name"
-            placeholderTextColor={colors.grey}
+            placeholderTextColor={colors.textSecondary}
             value={newOutfitName}
             onChangeText={setNewOutfitName}
           />
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="Product URL"
-            placeholderTextColor={colors.grey}
+            placeholderTextColor={colors.textSecondary}
             value={newOutfitUrl}
             onChangeText={setNewOutfitUrl}
             autoCapitalize="none"
           />
-          <TouchableOpacity style={styles.addButton} onPress={handleAddOutfit}>
-            <IconSymbol ios_icon_name="plus.circle.fill" android_material_icon_name="add-circle" size={24} color="#fff" />
-            <Text style={styles.addButtonText}>Add to Wardrobe</Text>
+          <TouchableOpacity style={buttonStyles.primary} onPress={handleAddOutfit}>
+            <View style={styles.buttonContent}>
+              <IconSymbol android_material_icon_name="add_circle" size={20} color="#FFFFFF" />
+              <Text style={buttonStyles.primaryText}>Add to Wardrobe</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
         <View style={styles.outfitsSection}>
-          <Text style={styles.sectionTitle}>My Outfits ({outfits.length})</Text>
+          <View style={commonStyles.sectionHeader}>
+            <Text style={commonStyles.subtitle}>My Outfits</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{outfits.length}</Text>
+            </View>
+          </View>
+          
           {outfits.length === 0 ? (
-            <Text style={styles.emptyText}>No outfits yet. Add your first one!</Text>
+            <View style={styles.emptyState}>
+              <IconSymbol android_material_icon_name="checkroom" size={64} color={colors.textLight} />
+              <Text style={styles.emptyText}>No outfits yet</Text>
+              <Text style={styles.emptySubtext}>Add your first outfit to get started!</Text>
+            </View>
           ) : (
             outfits.map((outfit) => (
-              <View key={outfit.id} style={styles.outfitCard}>
+              <View key={outfit.id} style={[styles.outfitCard, shadows.small]}>
+                <View style={styles.outfitIconCircle}>
+                  <IconSymbol android_material_icon_name="checkroom" size={24} color="#FFFFFF" />
+                </View>
                 <View style={styles.outfitInfo}>
                   <Text style={styles.outfitName}>{outfit.name}</Text>
                   <TouchableOpacity onPress={() => handleOpenProduct(outfit.productUrl)}>
@@ -151,13 +173,19 @@ export default function WardrobeScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => handleRemoveOutfit(outfit.id, outfit.name)}>
-                  <IconSymbol ios_icon_name="trash" android_material_icon_name="delete" size={24} color="#ff4444" />
+                <TouchableOpacity 
+                  onPress={() => handleRemoveOutfit(outfit.id, outfit.name)}
+                  style={styles.deleteButton}
+                >
+                  <IconSymbol android_material_icon_name="delete" size={24} color={colors.error} />
                 </TouchableOpacity>
               </View>
             ))
           )}
         </View>
+
+        {/* Bottom Padding for Tab Bar */}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -168,72 +196,86 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    padding: 20,
-    paddingTop: 100,
-    paddingBottom: 100,
+  header: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 24,
+    marginTop: 8,
+  },
+  content: {
+    padding: 20,
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
+    paddingVertical: 20,
   },
   addSection: {
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.card,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.accent,
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: colors.background,
-    color: colors.text,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  addButton: {
+  buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    padding: 14,
-    borderRadius: 8,
     gap: 8,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   outfitsSection: {
     marginBottom: 24,
   },
+  countBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  countText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    gap: 12,
+  },
   emptyText: {
-    color: colors.grey,
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 20,
   },
   outfitCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.card,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  outfitIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   outfitInfo: {
     flex: 1,
@@ -241,12 +283,15 @@ const styles = StyleSheet.create({
   },
   outfitName: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
     marginBottom: 4,
   },
   outfitUrl: {
-    color: colors.accent,
-    fontSize: 14,
+    color: colors.primary,
+    fontSize: 13,
+  },
+  deleteButton: {
+    padding: 8,
   },
 });

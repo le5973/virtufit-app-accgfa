@@ -1,5 +1,4 @@
 
-import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -10,9 +9,12 @@ import {
   Alert,
   Platform
 } from 'react-native';
-import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
+import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, commonStyles, shadows, buttonStyles } from '@/styles/commonStyles';
+import { ErvenistaBranding } from '@/components/ErvenistaBranding';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type TabType = 'profile' | 'features' | 'settings';
 
@@ -21,281 +23,94 @@ export default function ProfileScreen() {
 
   const handleShareProfile = async () => {
     try {
-      const result = await Share.share({
-        message: 'Check out my Ervenista profile! Create your own 3D avatar at ervenista.app',
+      await Share.share({
+        message: 'Check out my Ervenista profile! Join me for personalized virtual try-ons.',
         title: 'Share Ervenista Profile',
       });
-
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          console.log('Shared with activity type:', result.activityType);
-        } else {
-          console.log('Profile shared successfully');
-        }
-      } else if (result.action === Share.dismissedAction) {
-        console.log('Share dismissed');
-      }
     } catch (error) {
-      console.log('Error sharing profile:', error);
-      Alert.alert('Error', 'Failed to share profile');
+      console.error('Error sharing:', error);
     }
   };
 
   const renderProfileTab = () => (
-    <>
-      <View style={styles.header}>
-        <View style={styles.avatarPlaceholder}>
-          <IconSymbol 
-            ios_icon_name="person.circle.fill" 
-            android_material_icon_name="account-circle" 
-            size={80} 
-            color={colors.primary} 
-          />
-        </View>
-        <Text style={styles.name}>Your Profile</Text>
-        <Text style={styles.subtitle}>Ervenista Avatar</Text>
+    <View style={styles.tabContent}>
+      <View style={[styles.profileHeader, shadows.medium]}>
+        <LinearGradient
+          colors={[colors.primary, colors.primaryDark]}
+          style={styles.avatarGradient}
+        >
+          <IconSymbol android_material_icon_name="person" size={48} color="#FFFFFF" />
+        </LinearGradient>
+        <Text style={styles.profileName}>Your Profile</Text>
+        <Text style={styles.profileEmail}>user@ervenista.com</Text>
       </View>
 
-      <TouchableOpacity style={styles.shareButton} onPress={handleShareProfile}>
-        <IconSymbol 
-          ios_icon_name="square.and.arrow.up" 
-          android_material_icon_name="share" 
-          size={20} 
-          color={colors.milkyWay} 
-        />
-        <Text style={styles.shareButtonText}>Share Profile</Text>
+      <View style={[styles.card, shadows.small]}>
+        <View style={styles.statRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statLabel}>Saved Items</Text>
+          </View>
+          <View style={styles.dividerVertical} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>5</Text>
+            <Text style={styles.statLabel}>Try-Ons</Text>
+          </View>
+          <View style={styles.dividerVertical} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>8</Text>
+            <Text style={styles.statLabel}>Friends</Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity onPress={handleShareProfile} style={[buttonStyles.primary, { marginTop: 16 }]}>
+        <Text style={buttonStyles.primaryText}>Share Profile</Text>
       </TouchableOpacity>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About Ervenista</Text>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoText}>
-            Ervenista creates highly accurate 3D avatars using AI-powered body scanning technology. 
-            Upload your photo and measurements to see how clothes will look on you before buying.
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Measurements Tracked</Text>
-        <View style={styles.measurementsList}>
-          <Text style={styles.measurementItem}>• Bust</Text>
-          <Text style={styles.measurementItem}>• Waist</Text>
-          <Text style={styles.measurementItem}>• Hip</Text>
-          <Text style={styles.measurementItem}>• Shoulders</Text>
-          <Text style={styles.measurementItem}>• Arm Length</Text>
-          <Text style={styles.measurementItem}>• Legs Length</Text>
-          <Text style={styles.measurementItem}>• Feet Size</Text>
-        </View>
-      </View>
-    </>
+    </View>
   );
 
   const renderFeaturesTab = () => (
-    <>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Features</Text>
-        <View style={styles.featuresList}>
-          <View style={styles.featureItem}>
-            <IconSymbol 
-              ios_icon_name="camera.fill" 
-              android_material_icon_name="camera" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <View style={styles.featureTextContainer}>
-              <Text style={styles.featureText}>AI Body Scanning</Text>
-              <Text style={styles.featureDescription}>
-                Upload photos or videos to create your 3D avatar
-              </Text>
-            </View>
+    <View style={styles.tabContent}>
+      <Text style={commonStyles.heading}>Premium Features</Text>
+      {[
+        { title: 'AI Avatar Generation', icon: 'person', enabled: true },
+        { title: 'Virtual Try-On', icon: 'checkroom', enabled: true },
+        { title: 'Size Recommendations', icon: 'straighten', enabled: true },
+        { title: 'Social Sharing', icon: 'share', enabled: true },
+      ].map((feature, index) => (
+        <View key={index} style={[styles.featureItem, shadows.small]}>
+          <View style={[styles.featureIcon, { backgroundColor: colors.primaryLight }]}>
+            <IconSymbol android_material_icon_name={feature.icon as any} size={24} color="#FFFFFF" />
           </View>
-          <View style={styles.featureItem}>
-            <IconSymbol 
-              ios_icon_name="ruler.fill" 
-              android_material_icon_name="straighten" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <View style={styles.featureTextContainer}>
-              <Text style={styles.featureText}>Precise Measurements</Text>
-              <Text style={styles.featureDescription}>
-                Get accurate body measurements for perfect fit
-              </Text>
-            </View>
-          </View>
-          <View style={styles.featureItem}>
-            <IconSymbol 
-              ios_icon_name="person.fill" 
-              android_material_icon_name="person" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <View style={styles.featureTextContainer}>
-              <Text style={styles.featureText}>3D Avatar Creation</Text>
-              <Text style={styles.featureDescription}>
-                See yourself in 3D with realistic proportions
-              </Text>
-            </View>
-          </View>
-          <View style={styles.featureItem}>
-            <IconSymbol 
-              ios_icon_name="cart.fill" 
-              android_material_icon_name="shopping-cart" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <View style={styles.featureTextContainer}>
-              <Text style={styles.featureText}>Virtual Try-On</Text>
-              <Text style={styles.featureDescription}>
-                Try clothes virtually before purchasing
-              </Text>
-            </View>
-          </View>
+          <Text style={styles.featureText}>{feature.title}</Text>
+          <IconSymbol 
+            android_material_icon_name={feature.enabled ? "check_circle" : "cancel"} 
+            size={24} 
+            color={feature.enabled ? colors.success : colors.textLight} 
+          />
         </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>How It Works</Text>
-        <View style={styles.infoCard}>
-          <Text style={styles.stepNumber}>1.</Text>
-          <Text style={styles.stepText}>Upload your photo or video</Text>
-          <Text style={styles.stepNumber}>2.</Text>
-          <Text style={styles.stepText}>Enter your measurements</Text>
-          <Text style={styles.stepNumber}>3.</Text>
-          <Text style={styles.stepText}>AI creates your 3D avatar</Text>
-          <Text style={styles.stepNumber}>4.</Text>
-          <Text style={styles.stepText}>Try on clothes virtually</Text>
-        </View>
-      </View>
-    </>
+      ))}
+    </View>
   );
 
   const renderSettingsTab = () => (
-    <>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account Settings</Text>
-        <View style={styles.settingsList}>
-          <TouchableOpacity style={styles.settingItem}>
-            <IconSymbol 
-              ios_icon_name="person.fill" 
-              android_material_icon_name="person" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.settingText}>Edit Profile</Text>
-            <IconSymbol 
-              ios_icon_name="chevron.right" 
-              android_material_icon_name="chevron-right" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
-            <IconSymbol 
-              ios_icon_name="bell.fill" 
-              android_material_icon_name="notifications" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.settingText}>Notifications</Text>
-            <IconSymbol 
-              ios_icon_name="chevron.right" 
-              android_material_icon_name="chevron-right" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
-            <IconSymbol 
-              ios_icon_name="lock.fill" 
-              android_material_icon_name="lock" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.settingText}>Privacy</Text>
-            <IconSymbol 
-              ios_icon_name="chevron.right" 
-              android_material_icon_name="chevron-right" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>App Settings</Text>
-        <View style={styles.settingsList}>
-          <TouchableOpacity style={styles.settingItem}>
-            <IconSymbol 
-              ios_icon_name="moon.fill" 
-              android_material_icon_name="dark-mode" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.settingText}>Dark Mode</Text>
-            <IconSymbol 
-              ios_icon_name="chevron.right" 
-              android_material_icon_name="chevron-right" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
-            <IconSymbol 
-              ios_icon_name="globe" 
-              android_material_icon_name="language" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.settingText}>Language</Text>
-            <IconSymbol 
-              ios_icon_name="chevron.right" 
-              android_material_icon_name="chevron-right" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Support</Text>
-        <View style={styles.settingsList}>
-          <TouchableOpacity style={styles.settingItem}>
-            <IconSymbol 
-              ios_icon_name="questionmark.circle.fill" 
-              android_material_icon_name="help" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.settingText}>Help Center</Text>
-            <IconSymbol 
-              ios_icon_name="chevron.right" 
-              android_material_icon_name="chevron-right" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
-            <IconSymbol 
-              ios_icon_name="envelope.fill" 
-              android_material_icon_name="email" 
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.settingText}>Contact Us</Text>
-            <IconSymbol 
-              ios_icon_name="chevron.right" 
-              android_material_icon_name="chevron-right" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </>
+    <View style={styles.tabContent}>
+      <Text style={commonStyles.heading}>Settings</Text>
+      {[
+        { title: 'Account Settings', icon: 'settings' },
+        { title: 'Privacy & Security', icon: 'lock' },
+        { title: 'Notifications', icon: 'notifications' },
+        { title: 'Help & Support', icon: 'help' },
+        { title: 'About Ervenista', icon: 'info' },
+      ].map((item, index) => (
+        <TouchableOpacity key={index} style={[styles.settingItem, shadows.small]}>
+          <IconSymbol android_material_icon_name={item.icon as any} size={24} color={colors.primary} />
+          <Text style={styles.settingText}>{item.title}</Text>
+          <IconSymbol android_material_icon_name="chevron_right" size={24} color={colors.textLight} />
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 
   const renderContent = () => {
@@ -306,67 +121,45 @@ export default function ProfileScreen() {
         return renderFeaturesTab();
       case 'settings':
         return renderSettingsTab();
-      default:
-        return renderProfileTab();
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Tab Bar */}
-      <View style={styles.tabBar}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <ErvenistaBranding size="small" variant="minimal" />
+      </View>
+
+      <View style={[styles.tabBar, shadows.small]}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
+          style={[styles.tab, activeTab === 'profile' && styles.tabActive]}
           onPress={() => setActiveTab('profile')}
         >
-          <Text style={[
-            styles.tabText,
-            activeTab === 'profile' && styles.activeTabText
-          ]}>
+          <Text style={[styles.tabText, activeTab === 'profile' && styles.tabTextActive]}>
             Profile
           </Text>
-          {activeTab === 'profile' && (
-            <View style={styles.activeIndicator} />
-          )}
         </TouchableOpacity>
-
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'features' && styles.activeTab]}
+          style={[styles.tab, activeTab === 'features' && styles.tabActive]}
           onPress={() => setActiveTab('features')}
         >
-          <Text style={[
-            styles.tabText,
-            activeTab === 'features' && styles.activeTabText
-          ]}>
+          <Text style={[styles.tabText, activeTab === 'features' && styles.tabTextActive]}>
             Features
           </Text>
-          {activeTab === 'features' && (
-            <View style={styles.activeIndicator} />
-          )}
         </TouchableOpacity>
-
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'settings' && styles.activeTab]}
+          style={[styles.tab, activeTab === 'settings' && styles.tabActive]}
           onPress={() => setActiveTab('settings')}
         >
-          <Text style={[
-            styles.tabText,
-            activeTab === 'settings' && styles.activeTabText
-          ]}>
+          <Text style={[styles.tabText, activeTab === 'settings' && styles.tabTextActive]}>
             Settings
           </Text>
-          {activeTab === 'settings' && (
-            <View style={styles.activeIndicator} />
-          )}
         </TouchableOpacity>
       </View>
 
-      {/* Content */}
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-      >
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {renderContent()}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -377,109 +170,100 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  tabBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 100,
-    paddingBottom: 5,
-    backgroundColor: colors.background,
+  header: {
+    paddingVertical: 16,
+    alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 12,
+    padding: 4,
+  },
   tab: {
     flex: 1,
+    paddingVertical: 10,
     alignItems: 'center',
-    paddingVertical: 12,
-    position: 'relative',
+    borderRadius: 8,
   },
-  activeTab: {
-    // Active state handled by indicator
+  tabActive: {
+    backgroundColor: colors.primary,
   },
   tabText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.textSecondary,
   },
-  activeTabText: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    height: 3,
-    width: '80%',
-    backgroundColor: colors.primary,
-    borderRadius: 2,
+  tabTextActive: {
+    color: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
   },
-  contentContainer: {
+  tabContent: {
     padding: 20,
-    paddingBottom: 100,
   },
-  header: {
+  profileHeader: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
     alignItems: 'center',
-    marginBottom: 32,
-  },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.highlight,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  name: {
+  avatarGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  profileName: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 15,
+  profileEmail: {
+    fontSize: 14,
     color: colors.textSecondary,
   },
-  shareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 32,
-    gap: 8,
-  },
-  shareButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.milkyWay,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  infoCard: {
+  card: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  infoText: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 24,
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
-  featuresList: {
-    gap: 16,
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  dividerVertical: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: 8,
   },
   featureItem: {
     flexDirection: 'row',
@@ -487,51 +271,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: 12,
   },
-  featureTextContainer: {
-    flex: 1,
+  featureIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   featureText: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 4,
-  },
-  featureDescription: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  measurementsList: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 8,
-  },
-  measurementItem: {
-    fontSize: 15,
-    color: colors.text,
-    lineHeight: 24,
-  },
-  stepNumber: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.primary,
-    marginTop: 12,
-  },
-  stepText: {
-    fontSize: 15,
-    color: colors.text,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  settingsList: {
-    gap: 12,
   },
   settingItem: {
     flexDirection: 'row',
@@ -539,14 +295,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: 12,
   },
   settingText: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: colors.text,
+    marginLeft: 12,
   },
 });

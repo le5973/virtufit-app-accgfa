@@ -10,13 +10,13 @@ import {
   Image,
   Alert,
   RefreshControl,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
-import { colors } from '@/styles/commonStyles';
+import { colors, commonStyles, shadows, buttonStyles } from '@/styles/commonStyles';
 import { useFriends } from '@/hooks/useFriends';
-import { GlassView } from 'expo-glass-effect';
+import { ErvenistaBranding } from '@/components/ErvenistaBranding';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SocialScreen() {
   const { friends, friendRequests, searchUsers, sendFriendRequest, acceptRequest, loading, refreshFriends } = useFriends();
@@ -71,12 +71,17 @@ export default function SocialScreen() {
   };
 
   const renderFriendCard = (friend: any) => (
-    <GlassView key={friend.id} style={styles.friendCard} glassEffectStyle="regular">
+    <View key={friend.id} style={[styles.friendCard, shadows.small]}>
       <View style={styles.friendAvatar}>
         {friend.image ? (
           <Image source={{ uri: friend.image }} style={styles.avatarImage} />
         ) : (
-          <IconSymbol ios_icon_name="person.circle" android_material_icon_name="account-circle" size={40} color={colors.text} />
+          <LinearGradient
+            colors={[colors.primary, colors.primaryDark]}
+            style={styles.avatarGradient}
+          >
+            <IconSymbol android_material_icon_name="person" size={28} color="#FFFFFF" />
+          </LinearGradient>
         )}
       </View>
       <View style={styles.friendInfo}>
@@ -87,18 +92,23 @@ export default function SocialScreen() {
         style={styles.viewWishlistButton}
         onPress={() => handleViewWishlist(friend.id, friend.name)}
       >
-        <IconSymbol ios_icon_name="list.bullet" android_material_icon_name="list" size={20} color={colors.primary} />
+        <IconSymbol android_material_icon_name="list" size={20} color={colors.primary} />
       </TouchableOpacity>
-    </GlassView>
+    </View>
   );
 
   const renderRequestCard = (request: any) => (
-    <GlassView key={request.id} style={styles.requestCard} glassEffectStyle="regular">
+    <View key={request.id} style={[styles.requestCard, shadows.small]}>
       <View style={styles.friendAvatar}>
         {request.fromUser?.image ? (
           <Image source={{ uri: request.fromUser.image }} style={styles.avatarImage} />
         ) : (
-          <IconSymbol ios_icon_name="person.circle" android_material_icon_name="account-circle" size={40} color={colors.text} />
+          <LinearGradient
+            colors={[colors.secondary, colors.primary]}
+            style={styles.avatarGradient}
+          >
+            <IconSymbol android_material_icon_name="person" size={28} color="#FFFFFF" />
+          </LinearGradient>
         )}
       </View>
       <View style={styles.friendInfo}>
@@ -109,18 +119,23 @@ export default function SocialScreen() {
         style={styles.acceptButton}
         onPress={() => handleAcceptRequest(request.id)}
       >
-        <IconSymbol ios_icon_name="checkmark" android_material_icon_name="check" size={20} color="#fff" />
+        <IconSymbol android_material_icon_name="check" size={20} color="#FFFFFF" />
       </TouchableOpacity>
-    </GlassView>
+    </View>
   );
 
   const renderSearchResult = (user: any) => (
-    <GlassView key={user.id} style={styles.searchResultCard} glassEffectStyle="regular">
+    <View key={user.id} style={[styles.searchResultCard, shadows.small]}>
       <View style={styles.friendAvatar}>
         {user.image ? (
           <Image source={{ uri: user.image }} style={styles.avatarImage} />
         ) : (
-          <IconSymbol ios_icon_name="person.circle" android_material_icon_name="account-circle" size={40} color={colors.text} />
+          <LinearGradient
+            colors={[colors.accent, colors.primary]}
+            style={styles.avatarGradient}
+          >
+            <IconSymbol android_material_icon_name="person" size={28} color="#FFFFFF" />
+          </LinearGradient>
         )}
       </View>
       <View style={styles.friendInfo}>
@@ -131,34 +146,45 @@ export default function SocialScreen() {
         style={styles.addButton}
         onPress={() => handleSendRequest(user.id)}
       >
-        <IconSymbol ios_icon_name="person.badge.plus" android_material_icon_name="person-add" size={20} color="#fff" />
+        <IconSymbol android_material_icon_name="person_add" size={20} color="#FFFFFF" />
       </TouchableOpacity>
-    </GlassView>
+    </View>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
+        <ErvenistaBranding size="small" variant="minimal" />
         <Text style={styles.title}>Social</Text>
         <Text style={styles.subtitle}>Connect with friends and share wishlists</Text>
       </View>
 
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, shadows.small]}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'friends' && styles.activeTab]}
           onPress={() => setActiveTab('friends')}
         >
           <Text style={[styles.tabText, activeTab === 'friends' && styles.activeTabText]}>
-            Friends ({friends.length})
+            Friends
           </Text>
+          {friends.length > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{friends.length}</Text>
+            </View>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
           onPress={() => setActiveTab('requests')}
         >
           <Text style={[styles.tabText, activeTab === 'requests' && styles.activeTabText]}>
-            Requests ({friendRequests.length})
+            Requests
           </Text>
+          {friendRequests.length > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{friendRequests.length}</Text>
+            </View>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'search' && styles.activeTab]}
@@ -176,12 +202,13 @@ export default function SocialScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
+        showsVerticalScrollIndicator={false}
       >
         {activeTab === 'friends' && (
           <View>
             {friends.length === 0 ? (
               <View style={styles.emptyState}>
-                <IconSymbol ios_icon_name="person.2" android_material_icon_name="group" size={60} color={colors.textSecondary} />
+                <IconSymbol android_material_icon_name="group" size={64} color={colors.textLight} />
                 <Text style={styles.emptyText}>No friends yet</Text>
                 <Text style={styles.emptySubtext}>Search for users to add friends</Text>
               </View>
@@ -195,7 +222,7 @@ export default function SocialScreen() {
           <View>
             {friendRequests.length === 0 ? (
               <View style={styles.emptyState}>
-                <IconSymbol ios_icon_name="envelope" android_material_icon_name="mail" size={60} color={colors.textSecondary} />
+                <IconSymbol android_material_icon_name="mail" size={64} color={colors.textLight} />
                 <Text style={styles.emptyText}>No pending requests</Text>
               </View>
             ) : (
@@ -218,13 +245,13 @@ export default function SocialScreen() {
                 onSubmitEditing={handleSearch}
               />
               <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                <IconSymbol ios_icon_name="magnifyingglass" android_material_icon_name="search" size={20} color="#fff" />
+                <IconSymbol android_material_icon_name="search" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
             {searchResults.length === 0 ? (
               <View style={styles.emptyState}>
-                <IconSymbol ios_icon_name="magnifyingglass" android_material_icon_name="search" size={60} color={colors.textSecondary} />
+                <IconSymbol android_material_icon_name="search" size={64} color={colors.textLight} />
                 <Text style={styles.emptyText}>Search for friends</Text>
                 <Text style={styles.emptySubtext}>Enter a username or email to find users</Text>
               </View>
@@ -233,6 +260,9 @@ export default function SocialScreen() {
             )}
           </View>
         )}
+
+        {/* Bottom Padding for Tab Bar */}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -242,17 +272,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
   header: {
-    padding: 20,
-    paddingTop: 100,
-    paddingBottom: 10,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.text,
+    marginTop: 8,
     marginBottom: 4,
   },
   subtitle: {
@@ -261,18 +293,23 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    backgroundColor: colors.card,
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 12,
+    padding: 4,
   },
   tab: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 10,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    justifyContent: 'center',
+    borderRadius: 8,
+    gap: 6,
   },
   activeTab: {
-    borderBottomColor: colors.primary,
+    backgroundColor: colors.primary,
   },
   tabText: {
     fontSize: 14,
@@ -280,46 +317,61 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   activeTabText: {
-    color: colors.primary,
+    color: '#FFFFFF',
+  },
+  badge: {
+    backgroundColor: colors.secondary,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
   content: {
     flex: 1,
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 100,
   },
   friendCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   requestCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   searchResultCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   friendAvatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.cardBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginRight: 12,
     overflow: 'hidden',
   },
@@ -328,12 +380,19 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
   },
+  avatarGradient: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   friendInfo: {
     flex: 1,
   },
   friendName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 2,
   },
@@ -345,15 +404,17 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.backgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   acceptButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -368,16 +429,18 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     marginBottom: 20,
+    gap: 12,
   },
   searchInput: {
     flex: 1,
-    height: 48,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.card,
     borderRadius: 12,
     paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 15,
     color: colors.text,
-    marginRight: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   searchButton: {
     width: 48,
@@ -391,17 +454,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
+    gap: 12,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
-    marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginTop: 8,
     textAlign: 'center',
   },
 });

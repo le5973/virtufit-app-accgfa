@@ -6,16 +6,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/styles/commonStyles';
+import { colors, commonStyles, shadows, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { mockSizeGuides, predictFit, getBestFitSize } from '@/utils/sizeGuideHelper';
 import { BodyMeasurements, FitPrediction } from '@/types/bodyMeasurements';
 import { useAvatarStorage } from '@/hooks/useAvatarStorage';
 import { useRouter } from 'expo-router';
+import { ErvenistaBranding } from '@/components/ErvenistaBranding';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SizeGuideScreen() {
   const router = useRouter();
@@ -24,25 +25,22 @@ export default function SizeGuideScreen() {
   const [predictions, setPredictions] = useState<FitPrediction[]>([]);
   const [userMeasurements, setUserMeasurements] = useState<BodyMeasurements | null>(null);
 
-  // Load measurements from stored avatar data
   useEffect(() => {
     if (avatar?.measurements) {
-      // Convert stored measurements to BodyMeasurements format
       const measurements: BodyMeasurements = {
         bust: parseFloat(avatar.measurements.bust) || 0,
         waist: parseFloat(avatar.measurements.waist) || 0,
         hip: parseFloat(avatar.measurements.hip) || 0,
-        shoulders: 40, // Default value if not stored
-        armLength: 60, // Default value if not stored
-        legsLength: 80, // Default value if not stored
-        feetSize: 25, // Default value if not stored
+        shoulders: 40,
+        armLength: 60,
+        legsLength: 80,
+        feetSize: 25,
       };
       console.log('Loaded measurements from avatar:', measurements);
       setUserMeasurements(measurements);
     }
   }, [avatar]);
 
-  // Calculate predictions when brand or measurements change
   useEffect(() => {
     if (userMeasurements) {
       const sizeGuide = mockSizeGuides[selectedBrand];
@@ -56,7 +54,7 @@ export default function SizeGuideScreen() {
   const bestFit = getBestFitSize(predictions);
 
   const getFitScoreColor = (score: number) => {
-    if (score >= 85) return colors.primary;
+    if (score >= 85) return colors.success;
     if (score >= 70) return colors.accent;
     return colors.error;
   };
@@ -86,6 +84,7 @@ export default function SizeGuideScreen() {
       key={prediction.size}
       style={[
         styles.predictionCard,
+        shadows.small,
         prediction.perfectFit && styles.predictionCardPerfect,
       ]}
     >
@@ -95,16 +94,15 @@ export default function SizeGuideScreen() {
           {prediction.perfectFit && (
             <View style={styles.perfectBadge}>
               <IconSymbol
-                ios_icon_name="check-circle"
-                android_material_icon_name="check-circle"
+                android_material_icon_name="check_circle"
                 size={16}
-                color={colors.primary}
+                color={colors.success}
               />
               <Text style={styles.perfectBadgeText}>Perfect Fit</Text>
             </View>
           )}
         </View>
-        <View style={styles.fitScoreContainer}>
+        <View style={[styles.fitScoreContainer, { backgroundColor: getFitScoreColor(prediction.fitScore) + '20' }]}>
           <Text
             style={[
               styles.fitScore,
@@ -120,19 +118,12 @@ export default function SizeGuideScreen() {
         {prediction.recommendations.map((rec, index) => (
           <View key={index} style={styles.recommendationItem}>
             <IconSymbol
-              ios_icon_name={
-                prediction.tooSmall
-                  ? 'warning'
-                  : prediction.tooLarge
-                  ? 'info'
-                  : 'check-circle'
-              }
               android_material_icon_name={
                 prediction.tooSmall
                   ? 'warning'
                   : prediction.tooLarge
                   ? 'info'
-                  : 'check-circle'
+                  : 'check_circle'
               }
               size={16}
               color={
@@ -140,7 +131,7 @@ export default function SizeGuideScreen() {
                   ? colors.error
                   : prediction.tooLarge
                   ? colors.accent
-                  : colors.primary
+                  : colors.success
               }
             />
             <Text style={styles.recommendationText}>{rec}</Text>
@@ -150,10 +141,9 @@ export default function SizeGuideScreen() {
     </View>
   );
 
-  // Show loading state while avatar data is being loaded
   if (avatarLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading your measurements...</Text>
@@ -162,26 +152,32 @@ export default function SizeGuideScreen() {
     );
   }
 
-  // Show message if no avatar/measurements exist
   if (!userMeasurements || userMeasurements.bust === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <ErvenistaBranding size="small" variant="minimal" />
+        </View>
         <View style={styles.emptyContainer}>
-          <IconSymbol
-            ios_icon_name="person"
-            android_material_icon_name="person"
-            size={64}
-            color={colors.textSecondary}
-          />
+          <LinearGradient
+            colors={[colors.primary, colors.primaryDark]}
+            style={styles.emptyIconCircle}
+          >
+            <IconSymbol
+              android_material_icon_name="straighten"
+              size={48}
+              color="#FFFFFF"
+            />
+          </LinearGradient>
           <Text style={styles.emptyTitle}>No Measurements Found</Text>
           <Text style={styles.emptySubtitle}>
             Create your AI avatar first to get personalized size recommendations
           </Text>
           <TouchableOpacity
-            style={styles.createAvatarButton}
+            style={buttonStyles.primary}
             onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
           >
-            <Text style={styles.createAvatarButtonText}>Create Avatar</Text>
+            <Text style={buttonStyles.primaryText}>Create Avatar</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -189,47 +185,51 @@ export default function SizeGuideScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
+        <ErvenistaBranding size="small" variant="minimal" />
         <Text style={styles.title}>Size Guide</Text>
         <Text style={styles.subtitle}>
           Find your perfect fit based on your measurements
         </Text>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Measurements</Text>
-          <View style={styles.measurementsCard}>
-            <View style={styles.measurementRow}>
-              <Text style={styles.measurementLabel}>Bust:</Text>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.measurementsCard, shadows.medium]}>
+          <Text style={commonStyles.heading}>Your Measurements</Text>
+          <View style={styles.measurementGrid}>
+            <View style={styles.measurementItem}>
+              <Text style={styles.measurementLabel}>Bust</Text>
               <Text style={styles.measurementValue}>{userMeasurements.bust} cm</Text>
             </View>
-            <View style={styles.measurementRow}>
-              <Text style={styles.measurementLabel}>Waist:</Text>
+            <View style={styles.measurementItem}>
+              <Text style={styles.measurementLabel}>Waist</Text>
               <Text style={styles.measurementValue}>{userMeasurements.waist} cm</Text>
             </View>
-            <View style={styles.measurementRow}>
-              <Text style={styles.measurementLabel}>Hip:</Text>
+            <View style={styles.measurementItem}>
+              <Text style={styles.measurementLabel}>Hip</Text>
               <Text style={styles.measurementValue}>{userMeasurements.hip} cm</Text>
             </View>
           </View>
           <TouchableOpacity
-            style={styles.updateMeasurementsButton}
+            style={styles.updateButton}
             onPress={() => router.push('/(tabs)/(home)/avatar-generator')}
           >
             <IconSymbol
-              ios_icon_name="edit"
               android_material_icon_name="edit"
               size={16}
               color={colors.primary}
             />
-            <Text style={styles.updateMeasurementsText}>Update Measurements</Text>
+            <Text style={styles.updateButtonText}>Update Measurements</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Brand</Text>
+          <Text style={commonStyles.heading}>Select Brand</Text>
           <View style={styles.brandButtons}>
             {renderBrandButton('zara', 'Zara')}
             {renderBrandButton('h&m', 'H&M')}
@@ -238,28 +238,31 @@ export default function SizeGuideScreen() {
         </View>
 
         {bestFit && (
-          <View style={styles.bestFitBanner}>
-            <IconSymbol
-              ios_icon_name="star"
-              android_material_icon_name="star"
-              size={24}
-              color={colors.primary}
-            />
-            <View style={styles.bestFitText}>
-              <Text style={styles.bestFitTitle}>Recommended Size</Text>
-              <Text style={styles.bestFitSize}>Size {bestFit.size}</Text>
-            </View>
+          <View style={[styles.bestFitBanner, shadows.medium]}>
+            <LinearGradient
+              colors={[colors.success, colors.success + 'CC']}
+              style={styles.bestFitGradient}
+            >
+              <IconSymbol
+                android_material_icon_name="star"
+                size={28}
+                color="#FFFFFF"
+              />
+              <View style={styles.bestFitText}>
+                <Text style={styles.bestFitTitle}>Recommended Size</Text>
+                <Text style={styles.bestFitSize}>Size {bestFit.size}</Text>
+              </View>
+            </LinearGradient>
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>All Sizes</Text>
+          <Text style={commonStyles.heading}>All Sizes</Text>
           {predictions.map(renderPrediction)}
         </View>
 
-        <View style={styles.infoBox}>
+        <View style={[styles.infoBox, shadows.small]}>
           <IconSymbol
-            ios_icon_name="info"
             android_material_icon_name="info"
             size={20}
             color={colors.primary}
@@ -269,6 +272,9 @@ export default function SizeGuideScreen() {
             Actual fit may vary depending on fabric and style.
           </Text>
         </View>
+
+        {/* Bottom Padding for Tab Bar */}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -278,29 +284,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
   header: {
-    padding: 20,
-    paddingTop: 100,
-    paddingBottom: 16,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.text,
+    marginTop: 8,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 100,
   },
   loadingContainer: {
     flex: 1,
@@ -320,6 +328,13 @@ const styles = StyleSheet.create({
     padding: 40,
     gap: 16,
   },
+  emptyIconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emptyTitle: {
     fontSize: 24,
     fontWeight: '700',
@@ -332,62 +347,50 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  createAvatarButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  createAvatarButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.milkyWay,
-  },
   section: {
     marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 12,
-  },
   measurementsCard: {
     backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  measurementRow: {
+  measurementGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  measurementItem: {
+    alignItems: 'center',
+    flex: 1,
   },
   measurementLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '500',
+    marginBottom: 6,
   },
   measurementValue: {
-    fontSize: 15,
+    fontSize: 18,
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  updateMeasurementsButton: {
+  updateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 12,
     padding: 12,
-    backgroundColor: colors.card,
-    borderRadius: 8,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  updateMeasurementsText: {
+  updateButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
@@ -395,6 +398,7 @@ const styles = StyleSheet.create({
   brandButtons: {
     flexDirection: 'row',
     gap: 12,
+    marginTop: 12,
   },
   brandButton: {
     flex: 1,
@@ -415,42 +419,43 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   brandButtonTextActive: {
-    color: colors.milkyWay,
+    color: '#FFFFFF',
   },
   bestFitBanner: {
+    borderRadius: 16,
+    marginBottom: 24,
+    overflow: 'hidden',
+  },
+  bestFitGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    gap: 12,
+    padding: 20,
+    gap: 16,
   },
   bestFitText: {
     flex: 1,
   },
   bestFitTitle: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     fontWeight: '500',
+    opacity: 0.9,
   },
   bestFitSize: {
-    fontSize: 20,
-    color: colors.text,
+    fontSize: 24,
+    color: '#FFFFFF',
     fontWeight: '800',
   },
   predictionCard: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
   predictionCardPerfect: {
-    borderColor: colors.primary,
+    borderColor: colors.success,
     borderWidth: 2,
   },
   predictionHeader: {
@@ -472,7 +477,7 @@ const styles = StyleSheet.create({
   perfectBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.success + '20',
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -481,11 +486,10 @@ const styles = StyleSheet.create({
   perfectBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.success,
   },
   fitScoreContainer: {
-    backgroundColor: colors.background,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
